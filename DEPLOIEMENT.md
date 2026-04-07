@@ -24,6 +24,23 @@ PUMA Helpdesk est une application full-stack composée de :
 
 ## Déploiement automatisé (recommandé)
 
+### Ce que le script vérifie avant de toucher quoi que ce soit
+
+Avant toute installation, le script effectue un **audit complet de l'environnement** :
+
+| Vérification | Comportement |
+|---|---|
+| **IP principale** | Détectée automatiquement et affichée |
+| **Ports 80, 443, 3001–3005** | Inventaire complet avec le nom du processus occupant chaque port |
+| **Port API (3001)** | Si occupé, le script teste 3002, 3003… jusqu'à trouver un port libre |
+| **Nginx déjà en place** | Demande confirmation avant d'écraser un vhost existant ; sauvegarde automatique du fichier précédent (`.bak.YYYYMMDD`) |
+| **Installation PUMA existante** | Passe en mode *mise à jour* : le `.env` et la base de données sont conservés |
+| **Base de données existante** | Jamais recréée ni vidée si elle existe déjà |
+| **Processus PM2 existant** | Redémarré au lieu d'être recréé |
+| **SELinux** | `httpd_can_network_connect` activé automatiquement (évite l'erreur 502) |
+
+Un **récapitulatif interactif** est affiché avant tout changement — vous pouvez annuler.
+
 ### Étape 1 : Transférer le code sur le VPS
 
 Depuis votre machine locale :
