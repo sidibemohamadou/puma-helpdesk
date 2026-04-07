@@ -167,7 +167,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-foreground">
-              {stats?.avgResolutionTimeHours ? `${stats.avgResolutionTimeHours.toFixed(1)}h` : "N/A"}
+              {stats?.avgResolutionTimeHours != null ? `${Number(stats.avgResolutionTimeHours).toFixed(1)}h` : "N/A"}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Across resolved tickets
@@ -387,7 +387,7 @@ export default function Dashboard() {
                           </span>
                         </td>
                         <td className="px-4 py-3 text-right text-muted-foreground">
-                          {tech.avgResolutionTimeHours ? `${tech.avgResolutionTimeHours.toFixed(1)}h` : '-'}
+                          {tech.avgResolutionTimeHours != null ? `${Number(tech.avgResolutionTimeHours).toFixed(1)}h` : '-'}
                         </td>
                       </tr>
                     ))}
