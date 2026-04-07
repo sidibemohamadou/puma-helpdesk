@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq, like, or, sql } from "drizzle-orm";
-import { db, usersTable } from "@workspace/db";
+import { eq, like, or, sql, and, inArray } from "drizzle-orm";
+import { db, usersTable, ticketsTable } from "@workspace/db";
 import {
   CreateUserBody,
   UpdateUserBody,
@@ -70,6 +70,39 @@ router.post("/users", requireAuth, async (req, res): Promise<void> => {
     .returning();
 
   res.status(201).json(safeUser(user));
+});
+
+router.get("/users/workload", requireAuth, async (_req, res): Promise<void> => {
+  const technicians = await db
+    .select({
+      id: usersTable.id,
+      name: usersTable.name,
+      email: usersTable.email,
+    })
+    .from(usersTable)
+    .where(eq(usersTable.role, "technician"));
+
+  const workloads = await Promise.all(
+    technicians.map(async (tech) => {
+      const [result] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(ticketsTable)
+        .where(
+          and(
+            eq(ticketsTable.assigneeId, tech.id),
+            inArray(ticketsTable.status, ["open", "in_progress", "pending"]),
+          ),
+        );
+      return {
+        id: tech.id,
+        name: tech.name,
+        email: tech.email,
+        openTickets: result?.count ?? 0,
+      };
+    }),
+  );
+
+  res.json(workloads.sort((a, b) => a.openTickets - b.openTickets));
 });
 
 router.get("/users/:id", requireAuth, async (req, res): Promise<void> => {

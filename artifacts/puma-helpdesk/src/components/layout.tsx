@@ -18,6 +18,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useListTickets, getListTicketsQueryKey } from "@workspace/api-client-react";
+import { NotificationBell } from "@/components/notification-bell";
 
 function UrgentBadge() {
   const { data: criticalRes } = useListTickets(
@@ -151,6 +152,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             Profil
           </Button>
         </Link>
+        <NotificationBell />
         <Button
           variant="ghost"
           size="icon"
@@ -173,7 +175,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <img src="/logo-puma.jpg" alt="PUMA" className="h-8 w-8 object-contain rounded" />
           <span className="font-black text-base text-foreground tracking-tight">PUMA IT</span>
         </div>
-        <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+        <div className="flex items-center gap-1">
+          <NotificationBell />
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" className="md:hidden">
               <Menu className="h-5 w-5" />
@@ -193,6 +197,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <UserSection />
           </SheetContent>
         </Sheet>
+        </div>
       </header>
 
       {/* Desktop Sidebar */}

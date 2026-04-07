@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRoute, Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -89,6 +89,19 @@ export default function TicketDetail() {
     { query: { enabled: canManage } }
   );
 
+  const [workload, setWorkload] = useState<Record<number, number>>({});
+  useEffect(() => {
+    if (!canManage) return;
+    fetch("/api/users/workload", { credentials: "include" })
+      .then((r) => r.json())
+      .then((data: { id: number; openTickets: number }[]) => {
+        const map: Record<number, number> = {};
+        data.forEach((t) => { map[t.id] = t.openTickets; });
+        setWorkload(map);
+      })
+      .catch(() => {});
+  }, [canManage]);
+
   const updateTicketMutation = useUpdateTicket();
   const deleteTicketMutation = useDeleteTicket();
   const createCommentMutation = useCreateComment();
@@ -105,7 +118,7 @@ export default function TicketDetail() {
     return (
       <div className="flex flex-col items-center justify-center h-[50vh] text-muted-foreground space-y-4">
         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-        <p>Loading ticket details...</p>
+        <p>Chargement du ticket…</p>
       </div>
     );
   }
@@ -113,7 +126,7 @@ export default function TicketDetail() {
   if (isError || !ticket) {
     return (
       <div className="p-12 text-center text-destructive">
-        Failed to load ticket or ticket not found.
+        Impossible de charger le ticket ou ticket introuvable.
       </div>
     );
   }
@@ -125,9 +138,9 @@ export default function TicketDetail() {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getGetTicketQueryKey(ticketId) });
           queryClient.invalidateQueries({ queryKey: getListTicketsQueryKey() });
-          toast({ title: "Status updated" });
+          toast({ title: "Statut mis à jour" });
         },
-        onError: () => toast({ title: "Failed to update status", variant: "destructive" })
+        onError: () => toast({ title: "Impossible de mettre à jour le statut", variant: "destructive" })
       }
     );
   };
@@ -140,9 +153,9 @@ export default function TicketDetail() {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getGetTicketQueryKey(ticketId) });
           queryClient.invalidateQueries({ queryKey: getListTicketsQueryKey() });
-          toast({ title: "Assignee updated" });
+          toast({ title: "Technicien assigné" });
         },
-        onError: () => toast({ title: "Failed to update assignee", variant: "destructive" })
+        onError: () => toast({ title: "Impossible d'assigner le technicien", variant: "destructive" })
       }
     );
   };
@@ -152,11 +165,11 @@ export default function TicketDetail() {
       { id: ticketId },
       {
         onSuccess: () => {
-          toast({ title: "Ticket deleted successfully" });
+          toast({ title: "Ticket supprimé avec succès" });
           queryClient.invalidateQueries({ queryKey: getListTicketsQueryKey() });
           setLocation("/tickets");
         },
-        onError: () => toast({ title: "Failed to delete ticket", variant: "destructive" })
+        onError: () => toast({ title: "Impossible de supprimer le ticket", variant: "destructive" })
       }
     );
   };
@@ -175,7 +188,7 @@ export default function TicketDetail() {
           commentForm.reset();
           queryClient.invalidateQueries({ queryKey: getGetTicketQueryKey(ticketId) });
         },
-        onError: () => toast({ title: "Failed to post comment", variant: "destructive" })
+        onError: () => toast({ title: "Impossible de poster le commentaire", variant: "destructive" })
       }
     );
   };
@@ -418,37 +431,45 @@ export default function TicketDetail() {
               </CardHeader>
               <CardContent className="pt-4 space-y-4">
                 <div className="space-y-2">
-                  <Label>Status</Label>
+                  <Label>Statut</Label>
                   <Select value={ticket.status} onValueChange={handleStatusChange}>
                     <SelectTrigger className="w-full bg-background font-medium">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="open">Open</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="resolved">Resolved</SelectItem>
-                      <SelectItem value="closed">Closed</SelectItem>
+                      <SelectItem value="open">Ouvert</SelectItem>
+                      <SelectItem value="in_progress">En cours</SelectItem>
+                      <SelectItem value="pending">En attente</SelectItem>
+                      <SelectItem value="resolved">Résolu</SelectItem>
+                      <SelectItem value="closed">Fermé</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Assignee</Label>
+                  <Label>Technicien assigné</Label>
                   <Select 
                     value={ticket.assigneeId ? ticket.assigneeId.toString() : "unassigned"} 
                     onValueChange={handleAssigneeChange}
                   >
                     <SelectTrigger className="w-full bg-background">
-                      <SelectValue placeholder="Unassigned" />
+                      <SelectValue placeholder="Non assigné" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="unassigned" className="text-muted-foreground italic">Non assigné</SelectItem>
-                      {(usersData as UserType[] | undefined)?.map(u => (
-                        <SelectItem key={u.id} value={u.id.toString()}>
-                          {u.name}
-                        </SelectItem>
-                      ))}
+                      {(usersData as UserType[] | undefined)?.map(u => {
+                        const openCount = workload[u.id] ?? 0;
+                        return (
+                          <SelectItem key={u.id} value={u.id.toString()}>
+                            <span className="flex items-center justify-between gap-3 w-full">
+                              <span>{u.name}</span>
+                              <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${openCount === 0 ? "bg-green-100 text-green-700" : openCount < 5 ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"}`}>
+                                {openCount} ticket{openCount !== 1 ? "s" : ""}
+                              </span>
+                            </span>
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 </div>
@@ -459,53 +480,53 @@ export default function TicketDetail() {
           {/* Properties */}
           <Card className="shadow-sm border-border">
             <CardHeader className="pb-3 bg-muted/10 border-b">
-              <CardTitle className="text-base">Properties</CardTitle>
+              <CardTitle className="text-base">Propriétés</CardTitle>
             </CardHeader>
             <CardContent className="pt-4 p-0">
               <dl className="divide-y text-sm">
                 <div className="flex justify-between p-4">
                   <dt className="text-muted-foreground flex items-center gap-2">
                     <CategoryIcon category={ticket.category} className="h-4 w-4" />
-                    Category
+                    Catégorie
                   </dt>
                   <dd className="font-medium text-foreground">{getCategoryLabel(ticket.category)}</dd>
                 </div>
                 <div className="flex justify-between p-4">
                   <dt className="text-muted-foreground flex items-center gap-2">
                     <User className="h-4 w-4" />
-                    Requester
+                    Demandeur
                   </dt>
                   <dd className="font-medium text-foreground text-right">
                     <div>{ticket.createdBy.name}</div>
-                    <div className="text-xs text-muted-foreground">{ticket.createdBy.department || 'No department'}</div>
+                    <div className="text-xs text-muted-foreground">{ticket.createdBy.department || 'Aucun département'}</div>
                   </dd>
                 </div>
                 <div className="flex justify-between p-4">
                   <dt className="text-muted-foreground flex items-center gap-2">
                     <User className="h-4 w-4" />
-                    Assignee
+                    Technicien
                   </dt>
                   <dd className="font-medium text-foreground text-right">
-                    {ticket.assignee ? ticket.assignee.name : <span className="text-muted-foreground italic">Unassigned</span>}
+                    {ticket.assignee ? ticket.assignee.name : <span className="text-muted-foreground italic">Non assigné</span>}
                   </dd>
                 </div>
                 <div className="flex flex-col gap-2 p-4 bg-muted/5">
                   <dt className="text-muted-foreground flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
-                    Timeline
+                    Chronologie
                   </dt>
                   <dd className="text-xs space-y-1">
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Created:</span>
+                      <span className="text-muted-foreground">Créé :</span>
                       <span className="font-medium text-foreground">{formatDate(ticket.createdAt)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Updated:</span>
+                      <span className="text-muted-foreground">Mis à jour :</span>
                       <span className="font-medium text-foreground">{formatDate(ticket.updatedAt)}</span>
                     </div>
                     {ticket.resolvedAt && (
                       <div className="flex justify-between">
-                        <span className="text-green-600 dark:text-green-400">Resolved:</span>
+                        <span className="text-green-600 dark:text-green-400">Résolu :</span>
                         <span className="font-medium text-green-600 dark:text-green-400">{formatDate(ticket.resolvedAt)}</span>
                       </div>
                     )}

@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq, and, sql, like, or } from "drizzle-orm";
-import { db, ticketsTable, usersTable, commentsTable, activityLogTable } from "@workspace/db";
+import { eq, and, sql, like, or, inArray } from "drizzle-orm";
+import { db, ticketsTable, usersTable, commentsTable, activityLogTable, notificationsTable } from "@workspace/db";
 import {
   CreateTicketBody,
   UpdateTicketBody,
@@ -13,11 +13,35 @@ import {
   CreateCommentParams,
 } from "@workspace/api-zod";
 import { requireAuth } from "../middlewares/session";
+import { broadcastToRoles, sendToUser } from "../lib/sse";
 
 const router: IRouter = Router();
 
 async function logActivity(ticketId: number, actorId: number, action: string) {
   await db.insert(activityLogTable).values({ ticketId, actorId, action });
+}
+
+async function notifyStaff(
+  ticketId: number,
+  type: "new_ticket" | "ticket_assigned" | "status_changed" | "comment_added",
+  message: string,
+  targetUserIds?: number[],
+): Promise<void> {
+  let userIds: number[] = targetUserIds ?? [];
+
+  if (!targetUserIds) {
+    const staffUsers = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(inArray(usersTable.role, ["technician", "admin"]));
+    userIds = staffUsers.map((u) => u.id);
+  }
+
+  if (userIds.length === 0) return;
+
+  await db.insert(notificationsTable).values(
+    userIds.map((userId) => ({ userId, ticketId, type, message })),
+  );
 }
 
 async function getTicketWithRelations(ticketId: number) {
@@ -127,6 +151,29 @@ router.post("/tickets", requireAuth, async (req, res): Promise<void> => {
   await logActivity(ticket.id, userId, "Ticket created");
 
   const enriched = await getTicketWithRelations(ticket.id);
+
+  const creator = enriched?.createdBy?.name ?? "Un agent";
+  const notifMessage = `Nouveau ticket #${ticket.id.toString().padStart(4, "0")} — "${ticket.title}" soumis par ${creator}`;
+
+  await notifyStaff(ticket.id, "new_ticket", notifMessage);
+
+  const ssePayload = {
+    ticketId: ticket.id,
+    title: ticket.title,
+    priority: ticket.priority,
+    category: ticket.category,
+    createdBy: creator,
+    message: notifMessage,
+    timestamp: new Date().toISOString(),
+  };
+  broadcastToRoles(["technician", "admin"], "new_ticket", ssePayload);
+
+  if (parsed.data.assigneeId) {
+    const assignMsg = `Ticket #${ticket.id.toString().padStart(4, "0")} — "${ticket.title}" vous a été assigné`;
+    await notifyStaff(ticket.id, "ticket_assigned", assignMsg, [parsed.data.assigneeId]);
+    sendToUser(parsed.data.assigneeId, "ticket_assigned", { ticketId: ticket.id, title: ticket.title, message: assignMsg });
+  }
+
   res.status(201).json(enriched);
 });
 
@@ -200,13 +247,24 @@ router.patch("/tickets/:id", requireAuth, async (req, res): Promise<void> => {
 
   const changes = [];
   if (parsed.data.status && parsed.data.status !== existing.status) {
-    changes.push(`Status changed to ${parsed.data.status}`);
+    changes.push(`Statut changé en ${parsed.data.status}`);
   }
   if (parsed.data.assigneeId !== undefined && parsed.data.assigneeId !== existing.assigneeId) {
-    changes.push(`Assignee updated`);
+    changes.push(`Assigné mis à jour`);
   }
   if (changes.length > 0) {
     await logActivity(ticket.id, userId, changes.join(", "));
+  }
+
+  if (parsed.data.assigneeId !== undefined && parsed.data.assigneeId !== existing.assigneeId && parsed.data.assigneeId !== null) {
+    const assignMsg = `Ticket #${ticket.id.toString().padStart(4, "0")} — "${existing.title}" vous a été assigné`;
+    await notifyStaff(ticket.id, "ticket_assigned", assignMsg, [parsed.data.assigneeId]);
+    sendToUser(parsed.data.assigneeId, "ticket_assigned", {
+      ticketId: ticket.id,
+      title: existing.title,
+      message: assignMsg,
+      timestamp: new Date().toISOString(),
+    });
   }
 
   const enriched = await getTicketWithRelations(ticket.id);

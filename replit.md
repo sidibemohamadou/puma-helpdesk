@@ -30,6 +30,9 @@ pnpm workspace monorepo using TypeScript. PUMA IT Helpdesk application — an in
 - Comment system with internal/external notes
 - User management (admin only)
 - Activity audit log
+- **Real-time notifications**: SSE stream + polling fallback for technicians/admins when tickets are submitted or assigned; notification bell with unread badge + dropdown; toast alerts
+- **Workload visibility**: Admin/Technician can see open ticket count per technician in assignment dropdown (color-coded: green=0, yellow<5, red>=5)
+- **Full French localization**: All UI translated to French including statuses, toast messages, labels
 
 ## Demo Accounts
 
