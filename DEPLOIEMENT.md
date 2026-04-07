@@ -5,7 +5,7 @@
 PUMA Helpdesk est une application full-stack composée de :
 - **Frontend** : React + Vite (fichiers statiques servis par Nginx)
 - **Backend (API)** : Express 5 + Node.js (géré par PM2)
-- **Base de données** : PostgreSQL
+- **Base de données** : PostgreSQL 16
 - **Reverse proxy** : Nginx (HTTP/HTTPS + SSE temps réel)
 
 ---
@@ -14,7 +14,7 @@ PUMA Helpdesk est une application full-stack composée de :
 
 | Composant | Version minimum | Recommandé |
 |-----------|----------------|------------|
-| OS | Ubuntu 20.04 / Debian 11 | Ubuntu 22.04 |
+| OS | CentOS 9 Stream | **CentOS 10 Stream** |
 | RAM | 1 Go | 2 Go |
 | Disque | 10 Go | 20 Go |
 | Node.js | 20.x | 22.x |
@@ -31,37 +31,42 @@ Depuis votre machine locale :
 ```bash
 # Option A : avec rsync (transfert direct)
 rsync -avz --exclude='.git' --exclude='node_modules' --exclude='*/dist' \
-  /chemin/vers/puma-helpdesk/ user@VOTRE_IP_VPS:/tmp/puma-source/
+  /chemin/vers/puma-helpdesk/ root@VOTRE_IP_VPS:/tmp/puma-source/
 
-# Option B : avec git (si dépôt Git hébergé)
-ssh user@VOTRE_IP_VPS "git clone https://votre-repo.git /tmp/puma-source"
+# Option B : avec scp (archive)
+tar czf puma.tar.gz --exclude='.git' --exclude='node_modules' .
+scp puma.tar.gz root@VOTRE_IP_VPS:/tmp/
+ssh root@VOTRE_IP_VPS "mkdir -p /tmp/puma-source && tar xzf /tmp/puma.tar.gz -C /tmp/puma-source"
+
+# Option C : avec git
+ssh root@VOTRE_IP_VPS "git clone https://votre-repo.git /tmp/puma-source"
 ```
 
 ### Étape 2 : Lancer le script de déploiement
 
 ```bash
 # Connexion SSH
-ssh user@VOTRE_IP_VPS
+ssh root@VOTRE_IP_VPS
 
 # Aller dans le dossier source
 cd /tmp/puma-source
 
-# (Optionnel) Configurer le domaine dans le script
+# (Optionnel) Configurer le domaine dans le script avant de lancer
 nano deploy.sh
-# Modifier DOMAIN="helpdesk.mondomaine.sn"
+# Modifier la ligne : DOMAIN="helpdesk.mondomaine.sn"
 
 # Lancer l'installation
-sudo bash deploy.sh
+bash deploy.sh
 ```
 
 Le script installe et configure automatiquement :
 - Node.js 22, pnpm, PM2
-- PostgreSQL + création de la base de données
+- PostgreSQL 16 via le dépôt officiel PGDG
 - Build complet (libs + API + frontend)
 - Migrations Drizzle ORM
 - Nginx en reverse proxy
-- UFW (pare-feu)
-- SSL Let's Encrypt (si domaine configuré)
+- firewalld (pare-feu)
+- SSL Let's Encrypt si domaine configuré
 
 ---
 
@@ -70,21 +75,62 @@ Le script installe et configure automatiquement :
 ### 1. Installation des dépendances système
 
 ```bash
-sudo apt-get update && sudo apt-get upgrade -y
-sudo apt-get install -y curl git build-essential nginx postgresql postgresql-contrib certbot python3-certbot-nginx ufw
+# Mise à jour système
+dnf update -y
 
-# Node.js 22 via NodeSource
-curl -fsSL https://deb.nodesource.com/setup_22.x | sudo bash -
-sudo apt-get install -y nodejs
-
-# pnpm
-sudo npm install -g pnpm@9 pm2
+# Outils de base
+dnf install -y curl git wget tar gcc gcc-c++ make openssl rsync
 ```
 
-### 2. Configuration PostgreSQL
+### 2. Node.js 22 via NodeSource
 
 ```bash
-sudo systemctl enable --now postgresql
+curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -
+dnf install -y nodejs
+
+# Vérification
+node -v   # doit afficher v22.x.x
+npm -v
+```
+
+### 3. pnpm et PM2
+
+```bash
+npm install -g pnpm@9 pm2
+
+# Vérification
+pnpm -v
+pm2 -v
+```
+
+### 4. Nginx
+
+```bash
+dnf install -y nginx
+systemctl enable --now nginx
+```
+
+### 5. PostgreSQL 16
+
+```bash
+# Ajouter le dépôt officiel PGDG (PostgreSQL Global Development Group)
+dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+
+# Désactiver le module postgresql du dépôt système (évite les conflits)
+dnf module disable -y postgresql
+
+# Installer PostgreSQL 16
+dnf install -y postgresql16-server postgresql16
+
+# Initialiser et démarrer
+postgresql-16-setup --initdb
+systemctl enable --now postgresql-16
+```
+
+### 6. Configuration PostgreSQL
+
+```bash
+# Se connecter en tant que postgres
 sudo -u postgres psql
 
 -- Dans le shell PostgreSQL :
@@ -94,23 +140,36 @@ GRANT ALL PRIVILEGES ON DATABASE puma_helpdesk TO puma_user;
 \q
 ```
 
-### 3. Déploiement du code
+> Par défaut sur CentOS, PostgreSQL n'accepte que les connexions locales via socket Unix.
+> La connexion via `localhost` (TCP) peut nécessiter d'ajuster `pg_hba.conf` :
 
 ```bash
-# Créer le répertoire applicatif
-sudo mkdir -p /opt/puma-helpdesk
-sudo useradd -m -s /bin/bash puma
-sudo chown -R puma:puma /opt/puma-helpdesk
+nano /var/lib/pgsql/16/data/pg_hba.conf
 
-# Copier les sources
-sudo rsync -a /tmp/puma-source/ /opt/puma-helpdesk/
-sudo chown -R puma:puma /opt/puma-helpdesk
+# Ajouter/modifier la ligne pour TCP local :
+# host  all  all  127.0.0.1/32  scram-sha-256
+
+# Redémarrer après modification
+systemctl restart postgresql-16
 ```
 
-### 4. Variables d'environnement
+### 7. Déploiement du code
 
 ```bash
-sudo -u puma nano /opt/puma-helpdesk/.env
+# Créer le répertoire applicatif et l'utilisateur dédié
+useradd -m -s /bin/bash puma
+mkdir -p /opt/puma-helpdesk
+chown -R puma:puma /opt/puma-helpdesk
+
+# Copier les sources
+rsync -a /tmp/puma-source/ /opt/puma-helpdesk/
+chown -R puma:puma /opt/puma-helpdesk
+```
+
+### 8. Variables d'environnement
+
+```bash
+nano /opt/puma-helpdesk/.env
 ```
 
 Contenu du fichier `.env` :
@@ -126,10 +185,15 @@ DATABASE_URL=postgresql://puma_user:MotDePasseFort123!@localhost:5432/puma_helpd
 SESSION_SECRET=votre_cle_secrete_tres_longue_ici
 ```
 
-> ⚠️ **Sécurité** : le fichier `.env` ne doit jamais être versionné dans Git.
-> Permissions recommandées : `chmod 600 /opt/puma-helpdesk/.env`
+```bash
+# Restreindre les permissions
+chmod 600 /opt/puma-helpdesk/.env
+chown puma:puma /opt/puma-helpdesk/.env
+```
 
-### 5. Installation des dépendances et build
+> ⚠️ Ne jamais versionner ce fichier dans Git.
+
+### 9. Installation des dépendances et build
 
 ```bash
 sudo -u puma bash -c "cd /opt/puma-helpdesk && pnpm install --frozen-lockfile"
@@ -137,14 +201,14 @@ sudo -u puma bash -c "cd /opt/puma-helpdesk && pnpm install --frozen-lockfile"
 # Build des librairies partagées
 sudo -u puma bash -c "cd /opt/puma-helpdesk && pnpm --filter './lib/**' run build"
 
-# Build de l'API
+# Build de l'API Express
 sudo -u puma bash -c "cd /opt/puma-helpdesk && pnpm --filter @workspace/api-server run build"
 
-# Build du frontend (fichiers statiques)
+# Build du frontend React/Vite (produit des fichiers statiques)
 sudo -u puma bash -c "cd /opt/puma-helpdesk && pnpm --filter @workspace/puma-helpdesk run build"
 ```
 
-### 6. Migrations de base de données
+### 10. Migrations de base de données
 
 ```bash
 sudo -u puma bash -c "
@@ -154,7 +218,7 @@ sudo -u puma bash -c "
 "
 ```
 
-Pour les données de démonstration (optionnel, première installation) :
+Données de démonstration (optionnel, première installation uniquement) :
 
 ```bash
 sudo -u puma bash -c "
@@ -164,11 +228,14 @@ sudo -u puma bash -c "
 "
 ```
 
-### 7. Démarrage de l'API avec PM2
-
-Créer le fichier de configuration PM2 :
+### 11. Démarrage de l'API avec PM2
 
 ```bash
+# Créer le répertoire de logs
+mkdir -p /var/log/puma-helpdesk
+chown -R puma:puma /var/log/puma-helpdesk
+
+# Créer le fichier de configuration PM2
 cat > /opt/puma-helpdesk/ecosystem.config.cjs <<'EOF'
 module.exports = {
   apps: [{
@@ -190,23 +257,23 @@ module.exports = {
   }]
 };
 EOF
+chown puma:puma /opt/puma-helpdesk/ecosystem.config.cjs
 
-mkdir -p /var/log/puma-helpdesk
-chown -R puma:puma /var/log/puma-helpdesk
-
-# Démarrer
+# Démarrer l'application
 sudo -u puma pm2 start /opt/puma-helpdesk/ecosystem.config.cjs
 sudo -u puma pm2 save
 
-# Démarrage automatique au boot
-sudo pm2 startup systemd -u puma --hp /home/puma
-# Exécuter la commande affichée par PM2
+# Configurer le démarrage automatique au boot
+pm2 startup systemd -u puma --hp /home/puma
+# Exécuter la commande sudo affichée par PM2
 ```
 
-### 8. Configuration Nginx
+### 12. Configuration Nginx
+
+Sur CentOS, les vhosts vont dans `/etc/nginx/conf.d/` :
 
 ```bash
-sudo nano /etc/nginx/sites-available/puma-helpdesk
+nano /etc/nginx/conf.d/puma-helpdesk.conf
 ```
 
 ```nginx
@@ -246,7 +313,7 @@ server {
     proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
     proxy_set_header   X-Forwarded-Proto $scheme;
     proxy_set_header   Connection        '';
-    proxy_buffering    off;       # Obligatoire pour SSE
+    proxy_buffering    off;       # Obligatoire pour SSE (notifications temps réel)
     proxy_cache        off;
     proxy_read_timeout 3600s;    # Long timeout pour SSE
     proxy_send_timeout 3600s;
@@ -261,58 +328,80 @@ server {
 ```
 
 ```bash
-sudo ln -sf /etc/nginx/sites-available/puma-helpdesk /etc/nginx/sites-enabled/
-sudo rm -f /etc/nginx/sites-enabled/default
-sudo nginx -t && sudo systemctl reload nginx
+# Vérifier et recharger Nginx
+nginx -t && systemctl reload nginx
 ```
 
-### 9. SSL avec Let's Encrypt
+### 13. SELinux (spécifique CentOS)
 
-> Prérequis : le domaine DNS doit pointer vers votre IP VPS.
+SELinux est activé par défaut sur CentOS et peut bloquer Nginx.
 
 ```bash
-sudo certbot --nginx -d helpdesk.mondomaine.sn --email admin@mondomaine.sn --agree-tos --non-interactive
+# Autoriser Nginx à contacter l'API (port 3001)
+setsebool -P httpd_can_network_connect 1
+
+# Vérification
+getsebool httpd_can_network_connect
+```
+
+> Si Nginx renvoie une erreur `502 Bad Gateway`, c'est probablement SELinux.
+> La commande ci-dessus règle le problème de façon permanente.
+
+### 14. Pare-feu firewalld
+
+```bash
+systemctl enable --now firewalld
+
+firewall-cmd --permanent --add-service=ssh
+firewall-cmd --permanent --add-service=http
+firewall-cmd --permanent --add-service=https
+firewall-cmd --reload
+
+# Vérification
+firewall-cmd --list-all
+```
+
+### 15. SSL avec Let's Encrypt
+
+> Le DNS de votre domaine doit déjà pointer vers l'IP du VPS.
+
+```bash
+# Installation certbot
+dnf install -y epel-release
+dnf install -y certbot python3-certbot-nginx
+
+# Obtenir le certificat
+certbot --nginx -d helpdesk.mondomaine.sn \
+  --email admin@mondomaine.sn \
+  --agree-tos --non-interactive
 
 # Renouvellement automatique
-sudo systemctl enable certbot.timer
-```
-
-### 10. Pare-feu UFW
-
-```bash
-sudo ufw allow OpenSSH
-sudo ufw allow 'Nginx Full'
-sudo ufw enable
-sudo ufw status
+systemctl enable --now certbot-renew.timer
 ```
 
 ---
 
 ## Mise à jour de l'application
 
-Pour déployer une nouvelle version :
-
 ```bash
-# 1. Récupérer les nouvelles sources
-cd /opt/puma-helpdesk
-sudo -u puma git pull   # ou rsync depuis votre machine
+# 1. Transférer les nouvelles sources
+rsync -avz --exclude='.git' --exclude='node_modules' --exclude='*/dist' \
+  /chemin/local/puma-helpdesk/ root@VOTRE_IP:/opt/puma-helpdesk/
 
-# 2. Réinstaller les dépendances (si package.json modifié)
-sudo -u puma pnpm install --frozen-lockfile
+# 2. Sur le VPS — réinstaller et rebuilder
+sudo -u puma bash -c "cd /opt/puma-helpdesk && pnpm install --frozen-lockfile"
+sudo -u puma bash -c "cd /opt/puma-helpdesk && pnpm --filter './lib/**' run build"
+sudo -u puma bash -c "cd /opt/puma-helpdesk && pnpm --filter @workspace/api-server run build"
+sudo -u puma bash -c "cd /opt/puma-helpdesk && pnpm --filter @workspace/puma-helpdesk run build"
 
-# 3. Rebuild
-sudo -u puma pnpm --filter './lib/**' run build
-sudo -u puma pnpm --filter @workspace/api-server run build
-sudo -u puma pnpm --filter @workspace/puma-helpdesk run build
-
-# 4. Migrations (si schéma modifié)
+# 3. Migrations si le schéma a changé
 sudo -u puma bash -c "cd /opt/puma-helpdesk/lib/db && source /opt/puma-helpdesk/.env && pnpm run push-force"
 
-# 5. Redémarrer l'API
+# 4. Redémarrer l'API
 sudo -u puma pm2 restart puma-api
 
-# 6. Recharger Nginx (pour les assets statiques)
-sudo nginx -s reload
+# 5. Recharger Nginx (les assets statiques sont déjà en place)
+nginx -s reload
 ```
 
 ---
@@ -320,29 +409,37 @@ sudo nginx -s reload
 ## Commandes utiles
 
 ```bash
+# Statut de l'API
+sudo -u puma pm2 status
+
 # Logs de l'API en temps réel
 sudo -u puma pm2 logs puma-api
-
-# Statut de tous les services
-sudo -u puma pm2 status
-sudo systemctl status nginx
-sudo systemctl status postgresql
 
 # Redémarrer l'API
 sudo -u puma pm2 restart puma-api
 
-# Redémarrer Nginx
-sudo systemctl restart nginx
+# Statut Nginx
+systemctl status nginx
+nginx -t
 
-# Vérifier les erreurs Nginx
-sudo nginx -t
+# Logs Nginx
 tail -f /var/log/nginx/puma-helpdesk-error.log
 
-# Vérifier la base de données
-sudo -u postgres psql puma_helpdesk -c "SELECT count(*) FROM tickets;"
+# Statut PostgreSQL
+systemctl status postgresql-16
+
+# Connexion à la base de données
+sudo -u postgres psql puma_helpdesk
 
 # Backup de la base de données
-sudo -u postgres pg_dump puma_helpdesk > backup_$(date +%Y%m%d).sql
+sudo -u postgres pg_dump puma_helpdesk > backup_$(date +%Y%m%d_%H%M).sql
+
+# Vérifier le pare-feu
+firewall-cmd --list-all
+
+# Vérifier SELinux
+getenforce
+getsebool httpd_can_network_connect
 ```
 
 ---
@@ -358,28 +455,40 @@ sudo -u postgres pg_dump puma_helpdesk > backup_$(date +%Y%m%d).sql
 | Agent 2 | agent2@puma.sn | agent123 |
 | Agent 3 | agent3@puma.sn | agent123 |
 
-> ⚠️ **Changez tous les mots de passe avant la mise en production.**  
-> Utilisez l'interface Administrateur → Gestion des utilisateurs.
+> ⚠️ **Changez tous les mots de passe via Administrateur → Gestion des utilisateurs avant la mise en production.**
 
 ---
 
 ## Dépannage
 
+### Erreur 502 Bad Gateway (Nginx → API)
+
+**Cause probable : SELinux bloque Nginx**
+
+```bash
+# Solution immédiate
+setsebool -P httpd_can_network_connect 1
+# Vérifier les logs d'audit
+grep nginx /var/log/audit/audit.log | tail -20
+```
+
 ### L'API ne démarre pas
 
 ```bash
 sudo -u puma pm2 logs puma-api --lines 50
-# Vérifier la variable DATABASE_URL dans /opt/puma-helpdesk/.env
+# Vérifier la connexion à la base de données
+psql "$DATABASE_URL" -c "SELECT 1"
+# Vérifier le fichier .env
+cat /opt/puma-helpdesk/.env
 ```
 
 ### Le frontend affiche une page blanche
 
 ```bash
-# Vérifier le build
+# Vérifier que le build existe
 ls /opt/puma-helpdesk/artifacts/puma-helpdesk/dist/
-# Vérifier nginx
-sudo nginx -t
-sudo systemctl status nginx
+# Vérifier la config Nginx
+nginx -t
 ```
 
 ### Les notifications SSE ne fonctionnent pas
@@ -387,13 +496,24 @@ sudo systemctl status nginx
 Vérifier la configuration Nginx :
 - `proxy_buffering off;` doit être présent dans le bloc `/api/`
 - `proxy_read_timeout` doit être ≥ 3600s
-- Pas de CDN ou proxy intermédiaire coupant les connexions longues
+- Aucun CDN ou proxy intermédiaire ne coupe les connexions longues
 
-### Connexion à la base de données échoue
+### PostgreSQL ne démarre pas
 
 ```bash
-# Tester la connexion
-psql "postgresql://puma_user:VOTRE_MOT_DE_PASSE@localhost:5432/puma_helpdesk"
-# Vérifier PostgreSQL
-sudo systemctl status postgresql
+# Vérifier si la base est initialisée
+ls /var/lib/pgsql/16/data/
+# Réinitialiser si vide
+postgresql-16-setup --initdb
+systemctl start postgresql-16
+journalctl -u postgresql-16 -n 50
+```
+
+### Connexion PostgreSQL refusée (TCP)
+
+```bash
+# Éditer pg_hba.conf
+nano /var/lib/pgsql/16/data/pg_hba.conf
+# Ajouter : host  all  all  127.0.0.1/32  scram-sha-256
+systemctl restart postgresql-16
 ```
