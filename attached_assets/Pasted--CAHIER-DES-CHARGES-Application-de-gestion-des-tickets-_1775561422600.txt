@@ -1,0 +1,278 @@
+# 📄 CAHIER DES CHARGES
+
+## Application de gestion des tickets IT – Programme PUMA
+
+---
+
+# 1. 🧭 Contexte du projet
+
+Le **Programme d'Urgence de Modernisation des Axes et Territoires frontaliers (PUMA)** souhaite mettre en place une application interne de gestion des incidents et demandes informatiques.
+
+Actuellement, les demandes IT sont traitées de manière informelle (emails, appels, messages), ce qui entraîne :
+
+* une perte de traçabilité
+* des délais de traitement non maîtrisés
+* un manque de visibilité pour la hiérarchie
+
+👉 L’objectif est de mettre en place une plateforme centralisée de gestion des tickets IT.
+
+---
+
+# 2. 🎯 Objectifs
+
+* Centraliser toutes les demandes IT
+* Améliorer la réactivité du service informatique
+* Assurer la traçabilité complète des interventions
+* Fournir des indicateurs de performance (KPI)
+* Faciliter la communication entre utilisateurs et techniciens
+
+---
+
+# 3. 👥 Utilisateurs
+
+### 3.1 Agents (Demandeurs)
+
+* Personnel des différents départements
+* Création et suivi de tickets
+
+### 3.2 Techniciens IT
+
+* Traitement des tickets
+* Mise à jour des statuts
+* Communication avec les demandeurs
+
+### 3.3 Administrateurs
+
+* Gestion des utilisateurs
+* Configuration du système
+* Accès aux statistiques globales
+
+---
+
+# 4. ⚙️ Fonctionnalités principales
+
+## 4.1 Gestion des tickets
+
+* Création de ticket via formulaire
+* Champs obligatoires :
+
+  * Titre
+  * Description
+  * Catégorie (réseau, matériel, logiciel, sécurité…)
+  * Priorité (faible, moyenne, élevée, critique)
+* Attribution automatique ou manuelle
+* Statuts :
+
+  * Ouvert
+  * En cours
+  * En attente
+  * Résolu
+  * Fermé
+
+---
+
+## 4.2 Communication
+
+* Système de commentaires (type chat intégré au ticket)
+* Historique complet des échanges
+* Notifications (email ou interne)
+
+---
+
+## 4.3 Gestion des utilisateurs
+
+* Authentification sécurisée
+* Rôles :
+
+  * Agent
+  * Technicien
+  * Administrateur
+* Gestion des permissions
+
+---
+
+## 4.4 Tableau de bord
+
+* Nombre de tickets :
+
+  * ouverts
+  * en cours
+  * résolus
+* Temps moyen de résolution
+* Tickets par catégorie
+* Performance des techniciens
+
+---
+
+## 4.5 Pièces jointes
+
+* Ajout de fichiers (captures d’écran, documents)
+* Limitation de taille configurable
+
+---
+
+# 5. 🏗️ Architecture technique
+
+## 5.1 Stack recommandée
+
+* Frontend : React / Next.js
+* Backend : Node.js (NestJS ou Express)
+* Base de données : PostgreSQL
+
+---
+
+## 5.2 API
+
+* API REST sécurisée
+* Authentification via JWT ou session sécurisée
+
+---
+
+## 5.3 Hébergement
+
+* Déploiement sur VPS
+* Accès via sous-domaine (ex: support.puma.sn)
+* Serveur web : Nginx
+
+---
+
+# 6. 🔐 Sécurité
+
+* Authentification obligatoire
+* Gestion des rôles et permissions
+* Chiffrement HTTPS (SSL/TLS)
+* Journalisation des actions (audit log)
+* Protection contre :
+
+  * injections SQL
+  * XSS
+  * CSRF
+
+---
+
+# 7. 🚀 Haute disponibilité (HA)
+
+## 7.1 Objectif
+
+Garantir la continuité de service même en cas de panne.
+
+---
+
+## 7.2 Architecture recommandée
+
+### 🔹 Infrastructure
+
+* 2 serveurs applicatifs (minimum)
+* 1 load balancer (Nginx ou HAProxy)
+* 1 base de données principale + réplication
+
+---
+
+### 🔹 Mécanismes
+
+* Répartition de charge (load balancing)
+* Réplication de base de données (master/slave)
+* Redondance des services
+* Surveillance (monitoring)
+
+---
+
+### 🔹 Sauvegardes
+
+* Sauvegarde automatique quotidienne
+* Restauration rapide en cas d’incident
+
+---
+
+### 🔹 Disponibilité cible
+
+* 99.5% minimum
+
+---
+
+# 8. 📊 Performance
+
+* Temps de réponse < 2 secondes
+* Support de plusieurs utilisateurs simultanés
+* Optimisation des requêtes base de données
+
+---
+
+# 9. 📱 UX / UI
+
+* Interface simple et intuitive
+* Responsive (ordinateur + mobile)
+* Tableau de bord clair
+* Navigation rapide
+
+---
+
+# 10. 🔄 Évolutivité
+
+Le système devra permettre :
+
+* ajout de nouvelles fonctionnalités
+* intégration future (API externes)
+* montée en charge
+
+---
+
+# 11. 📅 Phases du projet
+
+### Phase 1 : MVP
+
+* Création de tickets
+* Gestion des statuts
+* Authentification
+* Interface de base
+
+### Phase 2 : Amélioration
+
+* Dashboard
+* Notifications
+* Pièces jointes
+
+### Phase 3 : Avancé
+
+* Haute disponibilité
+* Statistiques avancées
+* Optimisation
+
+---
+
+# 12. ✅ Livrables
+
+* Code source complet
+* Documentation technique
+* Guide utilisateur
+* Procédure de déploiement
+
+---
+
+# 13. ⚠️ Contraintes
+
+* Application interne sécurisée
+* Données sensibles (administration publique)
+* Accessibilité réseau contrôlée (VPN ou IP whitelist)
+
+---
+
+# 14. 🎯 Critères de réussite
+
+* Adoption par les utilisateurs
+* Réduction des délais de traitement
+* Amélioration de la traçabilité
+* Disponibilité continue du service
+
+---
+
+# 15. 🔮 Évolutions possibles
+
+* Application mobile
+* Intégration WhatsApp / email automatique
+* IA pour classification automatique des tickets
+* Chat en temps réel (WebSocket)
+
+---
+
+# FIN DU DOCUMENT
