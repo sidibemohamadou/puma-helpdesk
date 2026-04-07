@@ -13,6 +13,7 @@ import {
   getGetTicketQueryKey,
   getListTicketsQueryKey
 } from "@workspace/api-client-react";
+import type { User as UserType } from "@workspace/api-client-react/src/generated/api.schemas";
 import { useAuth } from "@/lib/auth";
 import { formatDate, formatRelativeTime, getInitials } from "@/lib/utils";
 
@@ -256,66 +257,94 @@ export default function TicketDetail() {
             </CardContent>
           </Card>
 
-          {/* Comments Section */}
+          {/* Chat Section */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold flex items-center gap-2">
               <MessageSquare className="h-5 w-5" />
               Conversation
+              {ticket.assignee && (
+                <span className="ml-auto text-xs font-normal text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900/50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
+                  Pris en charge par {ticket.assignee.name}
+                </span>
+              )}
             </h3>
-            
-            <div className="space-y-4">
-              {ticket.comments?.map((comment) => (
-                <div 
-                  key={comment.id} 
-                  className={`flex gap-4 p-4 rounded-lg border shadow-sm ${
-                    comment.isInternal 
-                      ? "bg-amber-50/50 border-amber-200 dark:bg-amber-900/10 dark:border-amber-900/50" 
-                      : "bg-card border-border"
-                  }`}
-                >
-                  <Avatar className="h-10 w-10 border shadow-sm shrink-0">
-                    <AvatarFallback className={
-                      comment.author.role === 'admin' || comment.author.role === 'technician' 
-                        ? "bg-primary/10 text-primary" 
-                        : "bg-secondary text-secondary-foreground"
-                    }>
-                      {getInitials(comment.author.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-foreground">{comment.author.name}</span>
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground capitalize">
-                          {comment.author.role}
+
+            {/* Chat Bubbles */}
+            <div className="space-y-3 min-h-[80px]">
+              {ticket.comments
+                ?.filter((c) => !c.isInternal || canManage)
+                .map((comment) => {
+                  const isMe = comment.author.id === user?.id;
+                  const isTechStaff =
+                    comment.author.role === "admin" || comment.author.role === "technician";
+
+                  return (
+                    <div
+                      key={comment.id}
+                      className={`flex gap-3 ${isMe ? "flex-row-reverse" : "flex-row"}`}
+                    >
+                      <Avatar className="h-8 w-8 border shadow-sm shrink-0 mt-1">
+                        <AvatarFallback
+                          className={
+                            isTechStaff
+                              ? "bg-primary/10 text-primary text-xs"
+                              : "bg-secondary text-secondary-foreground text-xs"
+                          }
+                        >
+                          {getInitials(comment.author.name)}
+                        </AvatarFallback>
+                      </Avatar>
+
+                      <div className={`flex flex-col gap-1 max-w-[75%] ${isMe ? "items-end" : "items-start"}`}>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {!isMe && (
+                            <span className="text-xs font-semibold text-foreground">{comment.author.name}</span>
+                          )}
+                          {isTechStaff && !isMe && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium capitalize">
+                              {comment.author.role}
+                            </span>
+                          )}
+                          {comment.isInternal && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 font-medium flex items-center gap-0.5">
+                              <Lock className="h-2.5 w-2.5" /> Note interne
+                            </span>
+                          )}
+                        </div>
+
+                        <div
+                          className={`px-4 py-2.5 rounded-2xl text-sm whitespace-pre-wrap shadow-sm ${
+                            comment.isInternal
+                              ? "bg-amber-50 border border-amber-200 dark:bg-amber-900/20 dark:border-amber-900/40 text-foreground rounded-tl-sm"
+                              : isMe
+                              ? "bg-primary text-primary-foreground rounded-tr-sm"
+                              : "bg-card border border-border text-foreground rounded-tl-sm"
+                          }`}
+                        >
+                          {comment.content}
+                        </div>
+
+                        <span
+                          className="text-[10px] text-muted-foreground"
+                          title={formatDate(comment.createdAt)}
+                        >
+                          {formatRelativeTime(comment.createdAt)}
                         </span>
-                        {comment.isInternal && (
-                          <span className="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-400 font-medium flex items-center gap-1">
-                            <Lock className="h-3 w-3" /> Internal Note
-                          </span>
-                        )}
                       </div>
-                      <span className="text-xs text-muted-foreground whitespace-nowrap" title={formatDate(comment.createdAt)}>
-                        {formatRelativeTime(comment.createdAt)}
-                      </span>
                     </div>
-                    <div className="text-sm text-foreground whitespace-pre-wrap mt-2">
-                      {comment.content}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              
-              {(!ticket.comments || ticket.comments.length === 0) && (
-                <div className="text-center py-12 text-muted-foreground border border-dashed rounded-lg bg-muted/20">
-                  No comments yet. Start the conversation below.
+                  );
+                })}
+
+              {(!ticket.comments || ticket.comments.filter((c) => !c.isInternal || canManage).length === 0) && (
+                <div className="text-center py-10 text-muted-foreground border border-dashed rounded-xl bg-muted/10 text-sm">
+                  Aucun message. Commencez la conversation ci-dessous.
                 </div>
               )}
             </div>
 
-            {/* Comment Form */}
-            <Card className="shadow-sm border-border mt-6 overflow-hidden focus-within:ring-1 focus-within:ring-ring transition-shadow">
+            {/* Message Input */}
+            <Card className="shadow-sm border-border mt-4 overflow-hidden focus-within:ring-1 focus-within:ring-ring transition-shadow">
               <Form {...commentForm}>
                 <form onSubmit={commentForm.handleSubmit(onCommentSubmit)}>
                   <div className="p-4 pb-0">
@@ -325,10 +354,10 @@ export default function TicketDetail() {
                       render={({ field }) => (
                         <FormItem>
                           <FormControl>
-                            <Textarea 
-                              placeholder="Add a reply..." 
-                              className="min-h-[100px] border-none shadow-none focus-visible:ring-0 resize-none p-0"
-                              {...field} 
+                            <Textarea
+                              placeholder={canManage ? "Répondre à l'agent..." : "Envoyer un message au technicien..."}
+                              className="min-h-[80px] border-none shadow-none focus-visible:ring-0 resize-none p-0"
+                              {...field}
                             />
                           </FormControl>
                           <FormMessage />
@@ -336,7 +365,7 @@ export default function TicketDetail() {
                       )}
                     />
                   </div>
-                  
+
                   <div className="bg-muted/30 p-3 border-t flex items-center justify-between">
                     <div>
                       {canManage && (
@@ -353,21 +382,21 @@ export default function TicketDetail() {
                               </FormControl>
                               <Label className="text-sm font-normal text-muted-foreground cursor-pointer flex items-center gap-1">
                                 <Lock className="h-3 w-3" />
-                                Internal note (hidden from agents)
+                                Note interne (cachée aux agents)
                               </Label>
                             </FormItem>
                           )}
                         />
                       )}
                     </div>
-                    <Button 
-                      type="submit" 
-                      size="sm" 
+                    <Button
+                      type="submit"
+                      size="sm"
                       className="shadow-sm"
                       disabled={createCommentMutation.isPending || !commentForm.watch("content").trim()}
                     >
                       <Send className="h-4 w-4 mr-2" />
-                      {createCommentMutation.isPending ? "Sending..." : "Send Reply"}
+                      {createCommentMutation.isPending ? "Envoi..." : "Envoyer"}
                     </Button>
                   </div>
                 </form>
@@ -414,8 +443,8 @@ export default function TicketDetail() {
                       <SelectValue placeholder="Unassigned" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="unassigned" className="text-muted-foreground italic">Unassigned</SelectItem>
-                      {usersData?.users.map(u => (
+                      <SelectItem value="unassigned" className="text-muted-foreground italic">Non assigné</SelectItem>
+                      {(usersData as UserType[] | undefined)?.map(u => (
                         <SelectItem key={u.id} value={u.id.toString()}>
                           {u.name}
                         </SelectItem>

@@ -241,10 +241,10 @@ export default function Users() {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {data?.users.length === 0 && (
+                  {(data as User[] | undefined)?.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
-                        No users found.
+                        Aucun utilisateur trouvé.
                       </TableCell>
                     </TableRow>
                   )}
