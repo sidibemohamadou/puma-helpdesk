@@ -18,12 +18,13 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Inbox,
   MessageSquare,
-  ChevronRight,
   UserCheck,
   PlayCircle,
   CheckCircle2,
   Clock,
   Layers,
+  PauseCircle,
+  RefreshCw,
 } from "lucide-react";
 import type { Ticket } from "@workspace/api-client-react/src/generated/api.schemas";
 
@@ -63,21 +64,29 @@ export default function Queue() {
     );
   };
 
-  const handleResolve = (ticketId: number) => {
+  const handleStatus = (ticketId: number, status: "in_progress" | "pending" | "resolved") => {
+    const labels: Record<string, string> = {
+      in_progress: "Ticket en cours de traitement",
+      pending: "Ticket mis en attente",
+      resolved: "Ticket marqué résolu",
+    };
     updateTicket.mutate(
-      { id: ticketId, data: { status: "resolved" } },
+      { id: ticketId, data: { status } },
       {
         onSuccess: () => {
-          toast({ title: "Ticket marqué résolu" });
+          toast({ title: labels[status] });
           queryClient.invalidateQueries({ queryKey: getListTicketsQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getGetTicketQueryKey(ticketId) });
         },
-        onError: () => toast({ title: "Erreur", variant: "destructive" }),
+        onError: () => toast({ title: "Erreur lors de la mise à jour", variant: "destructive" }),
       }
     );
   };
 
+  const handleResolve = (ticketId: number) => handleStatus(ticketId, "resolved");
+
   const TicketRow = ({ ticket, showTake }: { ticket: Ticket; showTake?: boolean }) => (
-    <div className="flex items-center gap-4 p-4 border rounded-xl bg-card hover:shadow-sm transition-all group">
+    <div className="flex items-start gap-4 p-4 border rounded-xl bg-card hover:shadow-sm transition-all group">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           {ticket.priority === "critical" && (
@@ -108,7 +117,7 @@ export default function Queue() {
         </div>
       </div>
 
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1.5 shrink-0">
         {showTake ? (
           <Button
             size="sm"
@@ -121,16 +130,42 @@ export default function Queue() {
             Prendre en charge
           </Button>
         ) : (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="text-xs text-green-600 hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-950/30"
-            onClick={() => handleResolve(ticket.id)}
-            disabled={updateTicket.isPending}
-          >
-            <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
-            Résoudre
-          </Button>
+          <>
+            {ticket.status === "pending" && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-xs text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                onClick={() => handleStatus(ticket.id, "in_progress")}
+                disabled={updateTicket.isPending}
+              >
+                <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                Reprendre
+              </Button>
+            )}
+            {ticket.status === "in_progress" && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-xs text-amber-600 hover:bg-amber-50 hover:text-amber-700"
+                onClick={() => handleStatus(ticket.id, "pending")}
+                disabled={updateTicket.isPending}
+              >
+                <PauseCircle className="h-3.5 w-3.5 mr-1.5" />
+                En attente
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-xs text-green-600 hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-950/30"
+              onClick={() => handleResolve(ticket.id)}
+              disabled={updateTicket.isPending}
+            >
+              <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+              Résoudre
+            </Button>
+          </>
         )}
         <Link href={`/tickets/${ticket.id}`}>
           <Button size="sm" variant="outline" className="gap-1 text-xs">

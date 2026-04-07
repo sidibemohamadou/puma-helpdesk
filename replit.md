@@ -33,6 +33,9 @@ pnpm workspace monorepo using TypeScript. PUMA IT Helpdesk application — an in
 - **Real-time notifications**: SSE stream + polling fallback for technicians/admins when tickets are submitted or assigned; notification bell with unread badge + dropdown; toast alerts
 - **Workload visibility**: Admin/Technician can see open ticket count per technician in assignment dropdown (color-coded: green=0, yellow<5, red>=5)
 - **Full French localization**: All UI translated to French including statuses, toast messages, labels
+- **Technician queue controls**: Claim ticket ("Prendre en charge"), pause ("En attente"), resume ("Reprendre"), resolve ("Résoudre") directly from queue list
+- **Auto-status transition**: When technician posts first comment on an open ticket, backend auto-transitions it to "in_progress" and notifies agent via SSE+DB
+- **Deployment**: `deploy.sh` script for automated VPS deployment; `DEPLOIEMENT.md` for full manual guide
 
 ## Demo Accounts
 

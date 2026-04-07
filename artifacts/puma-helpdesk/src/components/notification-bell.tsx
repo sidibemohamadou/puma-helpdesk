@@ -52,24 +52,20 @@ function PriorityLabel({ priority }: { priority?: string }) {
 export function NotificationBell() {
   const { toast } = useToast();
 
-  const handleNew = useCallback(
-    (notif: Notification) => {
-      toast({
-        title: "Nouveau ticket reçu",
-        description: notif.message,
-        duration: 6000,
-      });
-    },
-    [toast],
-  );
+  const { notifications, unreadCount, markAllRead, markRead, refetch } = useNotifications();
 
-  const { notifications, unreadCount, markAllRead, markRead, refetch } = useNotifications(handleNew);
+  const TOAST_TITLES: Record<string, string> = {
+    new_ticket: "Nouveau ticket",
+    ticket_assigned: "Ticket assigné",
+    status_changed: "Statut mis à jour",
+    comment_added: "Nouveau message",
+  };
 
   useSSENotifications(
     useCallback(
-      (_event, data: any) => {
+      (event, data: any) => {
         toast({
-          title: _event === "new_ticket" ? "🎫 Nouveau ticket" : "📋 Ticket mis à jour",
+          title: TOAST_TITLES[event] ?? "Notification",
           description: data.message ?? `Ticket #${data.ticketId}`,
           duration: 7000,
         });

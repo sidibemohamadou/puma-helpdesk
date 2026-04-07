@@ -333,6 +333,16 @@ router.post("/tickets/:id/comments", requireAuth, async (req, res): Promise<void
   }
 
   const userId = req.session.userId!;
+
+  const [author] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+  const isStaff = author?.role === "technician" || author?.role === "admin";
+
+  const [ticket] = await db.select().from(ticketsTable).where(eq(ticketsTable.id, params.data.id));
+  if (!ticket) {
+    res.status(404).json({ error: "Ticket not found" });
+    return;
+  }
+
   const [comment] = await db
     .insert(commentsTable)
     .values({
@@ -343,14 +353,49 @@ router.post("/tickets/:id/comments", requireAuth, async (req, res): Promise<void
     })
     .returning();
 
-  await logActivity(params.data.id, userId, `Comment added`);
+  await logActivity(params.data.id, userId, `Commentaire ajouté`);
+
+  if (isStaff && ticket.status === "open") {
+    await db
+      .update(ticketsTable)
+      .set({ status: "in_progress", updatedAt: new Date() })
+      .where(eq(ticketsTable.id, params.data.id));
+    await logActivity(params.data.id, userId, `Statut automatique: en cours (premier message technicien)`);
+  }
 
   const safeUser = (u: typeof usersTable.$inferSelect) => {
     const { passwordHash: _ph, ...rest } = u;
     return rest;
   };
 
-  const [author] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+  if (!parsed.data.isInternal) {
+    const notifMsg = `${author?.name ?? "Un technicien"} a répondu sur le ticket #${params.data.id.toString().padStart(4, "0")} — "${ticket.title}"`;
+    const notifType = "comment_added";
+
+    const agentId = ticket.createdById;
+    const notifyUserIds = isStaff
+      ? [agentId]
+      : [];
+
+    if (notifyUserIds.length > 0) {
+      await notifyStaff(params.data.id, notifType, notifMsg, notifyUserIds);
+      sendToUser(agentId, notifType, {
+        ticketId: params.data.id,
+        title: ticket.title,
+        message: notifMsg,
+        timestamp: new Date().toISOString(),
+      });
+    } else if (!isStaff) {
+      await notifyStaff(params.data.id, notifType, `${author?.name ?? "Agent"} a commenté sur le ticket #${params.data.id.toString().padStart(4, "0")} — "${ticket.title}"`);
+      broadcastToRoles(["technician", "admin"], notifType, {
+        ticketId: params.data.id,
+        title: ticket.title,
+        message: `${author?.name ?? "Agent"} a commenté sur le ticket #${params.data.id.toString().padStart(4, "0")} — "${ticket.title}"`,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
   res.status(201).json({ ...comment, author: safeUser(author) });
 });
 
