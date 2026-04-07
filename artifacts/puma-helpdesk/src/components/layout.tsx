@@ -169,11 +169,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-[100dvh] flex flex-col md:flex-row bg-background">
       {/* Mobile Header */}
       <header className="md:hidden flex items-center justify-between p-4 border-b bg-card z-10 sticky top-0">
-        <div className="flex items-center gap-2 font-bold text-lg text-primary tracking-tight">
-          <div className="w-8 h-8 rounded bg-primary text-primary-foreground flex items-center justify-center text-sm font-black">
-            PU
-          </div>
-          PUMA IT
+        <div className="flex items-center gap-2">
+          <img src="/logo-puma.jpg" alt="PUMA" className="h-8 w-8 object-contain rounded" />
+          <span className="font-black text-base text-foreground tracking-tight">PUMA IT</span>
         </div>
         <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
           <SheetTrigger asChild>
@@ -183,11 +181,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </SheetTrigger>
           <SheetContent side="left" className="w-64 p-0 flex flex-col h-full bg-card">
             <div className="p-6 flex-1">
-              <div className="flex items-center gap-2 font-bold text-xl text-primary tracking-tight mb-8">
-                <div className="w-8 h-8 rounded bg-primary text-primary-foreground flex items-center justify-center text-sm font-black">
-                  PU
+              <div className="flex items-center gap-2.5 mb-8">
+                <img src="/logo-puma.jpg" alt="PUMA" className="h-9 w-9 object-contain rounded" />
+                <div>
+                  <div className="font-black text-base text-foreground tracking-tight leading-none">PUMA IT</div>
+                  <div className="text-[10px] text-muted-foreground leading-tight">Support Informatique</div>
                 </div>
-                PUMA IT
               </div>
               <NavLinks />
             </div>
@@ -199,11 +198,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-64 border-r bg-card h-[100dvh] sticky top-0 shrink-0">
         <div className="p-6 flex-1">
-          <div className="flex items-center gap-2 font-bold text-xl text-primary tracking-tight mb-8">
-            <div className="w-8 h-8 rounded bg-primary text-primary-foreground flex items-center justify-center text-sm font-black shadow-sm">
-              PU
+          <div className="flex items-center gap-2.5 mb-8">
+            <img src="/logo-puma.jpg" alt="PUMA" className="h-9 w-9 object-contain rounded" />
+            <div>
+              <div className="font-black text-base text-foreground tracking-tight leading-none">PUMA IT</div>
+              <div className="text-[10px] text-muted-foreground leading-tight">Support Informatique</div>
             </div>
-            PUMA IT
           </div>
           <NavLinks />
         </div>

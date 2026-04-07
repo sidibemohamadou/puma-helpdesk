@@ -67,7 +67,7 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* LIGHT MODE */
+/* LIGHT MODE — blanc pur + jaune PUMA */
 :root {
   --button-outline: rgba(0,0,0, .10);
   --badge-outline: rgba(0,0,0, .05);
@@ -75,50 +75,52 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  /* Deep slate and bright amber theme */
-  --background: 210 20% 98%;
+  /* Blanc + Jaune PUMA */
+  --background: 0 0% 100%;
   --foreground: 222 47% 11%;
   
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
-  --ring: 25 95% 53%;
+  --border: 220 13% 91%;
+  --input: 220 13% 91%;
+  --ring: 46 100% 48%;
   
   --card: 0 0% 100%;
   --card-foreground: 222 47% 11%;
-  --card-border: 214 32% 91%;
+  --card-border: 220 13% 91%;
   
   --popover: 0 0% 100%;
   --popover-foreground: 222 47% 11%;
-  --popover-border: 214 32% 91%;
+  --popover-border: 220 13% 91%;
   
-  --primary: 25 95% 53%;
-  --primary-foreground: 0 0% 100%;
+  /* Yellow/gold primary */
+  --primary: 46 100% 48%;
+  --primary-foreground: 222 47% 10%;
   
-  --secondary: 217 10% 25%;
+  --secondary: 220 13% 18%;
   --secondary-foreground: 0 0% 100%;
   
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
+  --muted: 220 14% 96%;
+  --muted-foreground: 220 9% 46%;
   
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
+  --accent: 220 14% 96%;
+  --accent-foreground: 222 47% 11%;
   
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
 
-  --sidebar: 222 47% 11%;
-  --sidebar-foreground: 210 40% 98%;
-  --sidebar-border: 217 33% 17%;
-  --sidebar-primary: 25 95% 53%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 217 33% 17%;
-  --sidebar-accent-foreground: 210 40% 98%;
-  --sidebar-ring: 25 95% 53%;
+  /* Sidebar blanc avec bordure subtile */
+  --sidebar: 0 0% 100%;
+  --sidebar-foreground: 222 47% 11%;
+  --sidebar-border: 220 13% 91%;
+  --sidebar-primary: 46 100% 48%;
+  --sidebar-primary-foreground: 222 47% 10%;
+  --sidebar-accent: 220 14% 96%;
+  --sidebar-accent-foreground: 222 47% 11%;
+  --sidebar-ring: 46 100% 48%;
 
-  --chart-1: 25 95% 53%;
-  --chart-2: 217 10% 25%;
+  --chart-1: 46 100% 48%;
+  --chart-2: 220 13% 18%;
   --chart-3: 142 76% 36%;
-  --chart-4: 43 74% 66%;
+  --chart-4: 25 90% 55%;
   --chart-5: 0 84% 60%;
 
   --app-font-sans: 'Plus Jakarta Sans', sans-serif;
@@ -126,14 +128,14 @@
   --app-font-mono: 'Spline Sans Mono', monospace;
   --radius: 0.5rem;
 
-  --shadow-2xs: 0px 2px 0px 0px hsl(222 47% 11% / 0.05);
-  --shadow-xs: 0px 2px 0px 0px hsl(222 47% 11% / 0.05);
-  --shadow-sm: 0px 2px 0px 0px hsl(222 47% 11% / 0.05), 0px 1px 2px -1px hsl(222 47% 11% / 0.05);
-  --shadow: 0px 2px 0px 0px hsl(222 47% 11% / 0.05), 0px 1px 2px -1px hsl(222 47% 11% / 0.05);
-  --shadow-md: 0px 2px 0px 0px hsl(222 47% 11% / 0.05), 0px 2px 4px -1px hsl(222 47% 11% / 0.05);
-  --shadow-lg: 0px 2px 0px 0px hsl(222 47% 11% / 0.05), 0px 4px 6px -1px hsl(222 47% 11% / 0.05);
-  --shadow-xl: 0px 2px 0px 0px hsl(222 47% 11% / 0.05), 0px 8px 10px -1px hsl(222 47% 11% / 0.05);
-  --shadow-2xl: 0px 2px 0px 0px hsl(222 47% 11% / 0.05);
+  --shadow-2xs: 0px 1px 2px 0px hsl(222 47% 11% / 0.04);
+  --shadow-xs: 0px 1px 2px 0px hsl(222 47% 11% / 0.04);
+  --shadow-sm: 0px 1px 3px 0px hsl(222 47% 11% / 0.06), 0px 1px 2px -1px hsl(222 47% 11% / 0.04);
+  --shadow: 0px 1px 3px 0px hsl(222 47% 11% / 0.08), 0px 1px 2px -1px hsl(222 47% 11% / 0.06);
+  --shadow-md: 0px 4px 6px -1px hsl(222 47% 11% / 0.07), 0px 2px 4px -2px hsl(222 47% 11% / 0.05);
+  --shadow-lg: 0px 10px 15px -3px hsl(222 47% 11% / 0.07), 0px 4px 6px -4px hsl(222 47% 11% / 0.05);
+  --shadow-xl: 0px 20px 25px -5px hsl(222 47% 11% / 0.07), 0px 8px 10px -6px hsl(222 47% 11% / 0.05);
+  --shadow-2xl: 0px 25px 50px -12px hsl(222 47% 11% / 0.15);
   
   --tracking-normal: 0em;
   --spacing: 0.25rem;
@@ -161,49 +163,49 @@
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
 
-  --background: 222 47% 11%;
-  --foreground: 210 40% 98%;
+  --background: 222 20% 10%;
+  --foreground: 210 40% 96%;
   
-  --border: 217 33% 17%;
-  --input: 217 33% 17%;
-  --ring: 25 95% 53%;
+  --border: 217 20% 18%;
+  --input: 217 20% 18%;
+  --ring: 46 100% 48%;
   
-  --card: 222 47% 11%;
-  --card-foreground: 210 40% 98%;
-  --card-border: 217 33% 17%;
+  --card: 222 20% 13%;
+  --card-foreground: 210 40% 96%;
+  --card-border: 217 20% 18%;
   
-  --popover: 222 47% 11%;
-  --popover-foreground: 210 40% 98%;
-  --popover-border: 217 33% 17%;
+  --popover: 222 20% 13%;
+  --popover-foreground: 210 40% 96%;
+  --popover-border: 217 20% 18%;
   
-  --primary: 25 95% 53%;
-  --primary-foreground: 0 0% 100%;
+  --primary: 46 100% 48%;
+  --primary-foreground: 222 47% 10%;
   
-  --secondary: 217 33% 17%;
-  --secondary-foreground: 210 40% 98%;
+  --secondary: 217 20% 22%;
+  --secondary-foreground: 210 40% 96%;
   
-  --muted: 217 33% 17%;
-  --muted-foreground: 215 20.2% 65.1%;
+  --muted: 217 20% 18%;
+  --muted-foreground: 215 20% 60%;
   
-  --accent: 217 33% 17%;
-  --accent-foreground: 210 40% 98%;
+  --accent: 217 20% 18%;
+  --accent-foreground: 210 40% 96%;
   
-  --destructive: 0 62.8% 30.6%;
+  --destructive: 0 63% 45%;
   --destructive-foreground: 210 40% 98%;
 
-  --sidebar: 222 47% 11%;
-  --sidebar-foreground: 210 40% 98%;
-  --sidebar-border: 217 33% 17%;
-  --sidebar-primary: 25 95% 53%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 217 33% 17%;
-  --sidebar-accent-foreground: 210 40% 98%;
-  --sidebar-ring: 25 95% 53%;
+  --sidebar: 222 20% 10%;
+  --sidebar-foreground: 210 40% 96%;
+  --sidebar-border: 217 20% 18%;
+  --sidebar-primary: 46 100% 48%;
+  --sidebar-primary-foreground: 222 47% 10%;
+  --sidebar-accent: 217 20% 18%;
+  --sidebar-accent-foreground: 210 40% 96%;
+  --sidebar-ring: 46 100% 48%;
 
-  --chart-1: 25 95% 53%;
+  --chart-1: 46 100% 48%;
   --chart-2: 210 40% 96%;
   --chart-3: 142 76% 36%;
-  --chart-4: 43 74% 66%;
+  --chart-4: 25 90% 55%;
   --chart-5: 0 84% 60%;
 
   --shadow-2xs: 0px 2px 0px 0px hsl(0 0% 0% / 0.5);

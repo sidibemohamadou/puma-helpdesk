@@ -19,7 +19,7 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
   DropdownMenu,
@@ -40,8 +40,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Plus, MoreHorizontal, Edit, Trash2, Shield, UserCog, User as UserIcon } from "lucide-react";
+import { Search, Plus, MoreHorizontal, Trash2, Shield, UserCog, User as UserIcon } from "lucide-react";
 import type { User } from "@workspace/api-client-react/src/generated/api.schemas";
+
+const ROLE_LABELS: Record<string, string> = {
+  admin: "Administrateur",
+  technician: "Technicien",
+  agent: "Agent",
+};
 
 export default function Users() {
   const [search, setSearch] = useState("");
@@ -68,12 +74,12 @@ export default function Users() {
       { id: userId, data: { role: newRole } },
       {
         onSuccess: () => {
-          toast({ title: "Role updated successfully" });
+          toast({ title: "Rôle mis à jour avec succès" });
           queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
         },
         onError: (err) => {
           toast({ 
-            title: "Failed to update role", 
+            title: "Échec de la mise à jour du rôle", 
             description: err.error?.message,
             variant: "destructive" 
           });
@@ -89,13 +95,13 @@ export default function Users() {
       { id: userToDelete },
       {
         onSuccess: () => {
-          toast({ title: "User deleted successfully" });
+          toast({ title: "Utilisateur supprimé avec succès" });
           setUserToDelete(null);
           queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
         },
         onError: (err) => {
           toast({ 
-            title: "Failed to delete user", 
+            title: "Échec de la suppression", 
             description: err.error?.message,
             variant: "destructive" 
           });
@@ -117,13 +123,13 @@ export default function Users() {
     <div className="space-y-6 max-w-[1200px] mx-auto pb-10">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Staff Directory</h1>
-          <p className="text-muted-foreground mt-1">Manage system access, roles, and personnel.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Répertoire du personnel</h1>
+          <p className="text-muted-foreground mt-1">Gérez les accès, les rôles et le personnel du système.</p>
         </div>
         <Link href="/users/new">
           <Button className="shadow-sm hover-elevate">
             <Plus className="mr-2 h-4 w-4" />
-            Add User
+            Ajouter un utilisateur
           </Button>
         </Link>
       </div>
@@ -133,7 +139,7 @@ export default function Users() {
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search users by name, email, or department..."
+              placeholder="Rechercher par nom, email ou département..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -148,17 +154,17 @@ export default function Users() {
           {isLoading ? (
             <div className="flex flex-col items-center justify-center p-12 text-muted-foreground space-y-4">
               <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-              <p>Loading users...</p>
+              <p>Chargement des utilisateurs...</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader className="bg-muted/50">
                   <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Department</TableHead>
-                    <TableHead>Joined</TableHead>
+                    <TableHead>Utilisateur</TableHead>
+                    <TableHead>Rôle</TableHead>
+                    <TableHead>Département</TableHead>
+                    <TableHead>Inscription</TableHead>
                     <TableHead className="w-[80px] text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -185,9 +191,9 @@ export default function Users() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1.5 border w-fit px-2.5 py-1 rounded-md bg-background text-sm font-medium capitalize">
+                        <div className="flex items-center gap-1.5 border w-fit px-2.5 py-1 rounded-md bg-background text-sm font-medium">
                           {getRoleIcon(u.role)}
-                          {u.role}
+                          {ROLE_LABELS[u.role] ?? u.role}
                         </div>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
@@ -200,12 +206,12 @@ export default function Users() {
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
-                              <span className="sr-only">Open menu</span>
+                              <span className="sr-only">Ouvrir le menu</span>
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-[160px]">
-                            <DropdownMenuLabel>Change Role</DropdownMenuLabel>
+                          <DropdownMenuContent align="end" className="w-[180px]">
+                            <DropdownMenuLabel>Changer le rôle</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
                               onClick={() => handleRoleChange(u.id, "agent")}
@@ -219,14 +225,14 @@ export default function Users() {
                               disabled={u.role === "technician" || updateUserMutation.isPending}
                             >
                               <UserCog className="mr-2 h-4 w-4" />
-                              Technician
+                              Technicien
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               onClick={() => handleRoleChange(u.id, "admin")}
                               disabled={u.role === "admin" || updateUserMutation.isPending}
                             >
                               <Shield className="mr-2 h-4 w-4" />
-                              Admin
+                              Administrateur
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
@@ -234,7 +240,7 @@ export default function Users() {
                               className="text-destructive focus:bg-destructive/10 focus:text-destructive"
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
-                              Delete User
+                              Supprimer
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -258,20 +264,20 @@ export default function Users() {
       <AlertDialog open={userToDelete !== null} onOpenChange={(open) => !open && setUserToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the user account
-              and reassign their tickets to unassigned.
+              Cette action est irréversible. Le compte utilisateur sera définitivement supprimé
+              et ses tickets seront désassignés.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDelete} 
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={deleteUserMutation.isPending}
             >
-              {deleteUserMutation.isPending ? "Deleting..." : "Delete User"}
+              {deleteUserMutation.isPending ? "Suppression..." : "Supprimer l'utilisateur"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

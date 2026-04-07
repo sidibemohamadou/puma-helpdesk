@@ -99,13 +99,13 @@ export default function Tickets() {
     <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Incident Registry</h1>
-          <p className="text-muted-foreground mt-1">Manage and track all reported issues and requests.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Registre des incidents</h1>
+          <p className="text-muted-foreground mt-1">Gérez et suivez l'ensemble des incidents et demandes signalés.</p>
         </div>
         <Link href="/tickets/new">
           <Button className="shadow-sm hover-elevate">
             <Plus className="mr-2 h-4 w-4" />
-            Create Ticket
+            Créer un ticket
           </Button>
         </Link>
       </div>
@@ -116,7 +116,7 @@ export default function Tickets() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search tickets by title, ID, or description..."
+                placeholder="Rechercher par titre, ID ou description..."
                 value={search}
                 onChange={handleSearchChange}
                 className="pl-9 bg-background w-full"
@@ -129,12 +129,12 @@ export default function Tickets() {
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="open">Open</SelectItem>
-                  <SelectItem value="in_progress">In Progress</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="resolved">Resolved</SelectItem>
-                  <SelectItem value="closed">Closed</SelectItem>
+                  <SelectItem value="all">Tous les statuts</SelectItem>
+                  <SelectItem value="open">Ouvert</SelectItem>
+                  <SelectItem value="in_progress">En cours</SelectItem>
+                  <SelectItem value="pending">En attente</SelectItem>
+                  <SelectItem value="resolved">Résolu</SelectItem>
+                  <SelectItem value="closed">Clôturé</SelectItem>
                 </SelectContent>
               </Select>
               
@@ -143,11 +143,11 @@ export default function Tickets() {
                   <SelectValue placeholder="Priority" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Priorities</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="critical">Critical</SelectItem>
+                  <SelectItem value="all">Toutes les priorités</SelectItem>
+                  <SelectItem value="low">Faible</SelectItem>
+                  <SelectItem value="medium">Moyenne</SelectItem>
+                  <SelectItem value="high">Haute</SelectItem>
+                  <SelectItem value="critical">Critique</SelectItem>
                 </SelectContent>
               </Select>
               
@@ -156,18 +156,18 @@ export default function Tickets() {
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="hardware">Hardware</SelectItem>
-                  <SelectItem value="software">Software</SelectItem>
-                  <SelectItem value="network">Network</SelectItem>
-                  <SelectItem value="security">Security</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="all">Toutes les catégories</SelectItem>
+                  <SelectItem value="hardware">Matériel</SelectItem>
+                  <SelectItem value="software">Logiciel</SelectItem>
+                  <SelectItem value="network">Réseau</SelectItem>
+                  <SelectItem value="security">Sécurité</SelectItem>
+                  <SelectItem value="other">Autre</SelectItem>
                 </SelectContent>
               </Select>
               
               {(status !== "all" || priority !== "all" || category !== "all" || search !== "") && (
                 <Button variant="ghost" onClick={resetFilters} className="text-muted-foreground">
-                  Reset
+                  Réinitialiser
                 </Button>
               )}
             </div>
@@ -178,22 +178,22 @@ export default function Tickets() {
           {isLoading ? (
             <div className="flex flex-col items-center justify-center p-12 text-muted-foreground space-y-4">
               <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-              <p>Loading tickets...</p>
+              <p>Chargement des tickets...</p>
             </div>
           ) : isError ? (
             <div className="p-12 text-center text-destructive">
-              Failed to load tickets. Please try again.
+              Impossible de charger les tickets. Veuillez réessayer.
             </div>
           ) : data?.tickets.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-16 text-center text-muted-foreground">
               <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
                 <TicketIcon className="h-8 w-8 text-muted-foreground/50" />
               </div>
-              <h3 className="text-lg font-medium text-foreground mb-1">No tickets found</h3>
+              <h3 className="text-lg font-medium text-foreground mb-1">Aucun ticket trouvé</h3>
               <p className="max-w-sm mb-6">
-                We couldn't find any tickets matching your current filters.
+                Aucun ticket ne correspond à vos filtres actuels.
               </p>
-              <Button variant="outline" onClick={resetFilters}>Clear Filters</Button>
+              <Button variant="outline" onClick={resetFilters}>Effacer les filtres</Button>
             </div>
           ) : (
             <>
@@ -202,11 +202,11 @@ export default function Tickets() {
                   <TableHeader className="bg-muted/50">
                     <TableRow>
                       <TableHead className="w-[100px]">ID</TableHead>
-                      <TableHead>Ticket Details</TableHead>
-                      <TableHead className="w-[140px]">Status</TableHead>
-                      <TableHead className="w-[140px]">Priority</TableHead>
-                      <TableHead className="w-[160px]">Assignee</TableHead>
-                      <TableHead className="w-[140px] text-right">Updated</TableHead>
+                      <TableHead>Détails du ticket</TableHead>
+                      <TableHead className="w-[140px]">Statut</TableHead>
+                      <TableHead className="w-[140px]">Priorité</TableHead>
+                      <TableHead className="w-[160px]">Assigné à</TableHead>
+                      <TableHead className="w-[140px] text-right">Mis à jour</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -228,7 +228,7 @@ export default function Tickets() {
                                 {getCategoryLabel(ticket.category)}
                               </span>
                               <span>•</span>
-                              <span>By {ticket.createdBy.name}</span>
+                              <span>Par {ticket.createdBy.name}</span>
                             </div>
                           </Link>
                         </TableCell>
@@ -254,7 +254,7 @@ export default function Tickets() {
                                 <span className="text-sm truncate max-w-[100px]">{ticket.assignee.name}</span>
                               </div>
                             ) : (
-                              <span className="text-sm text-muted-foreground italic">Unassigned</span>
+                              <span className="text-sm text-muted-foreground italic">Non assigné</span>
                             )}
                           </Link>
                         </TableCell>
@@ -276,7 +276,7 @@ export default function Tickets() {
               {data && data.totalPages > 1 && (
                 <div className="flex items-center justify-between px-6 py-4 border-t bg-muted/20">
                   <div className="text-sm text-muted-foreground">
-                    Showing <span className="font-medium text-foreground">{(data.page - 1) * data.limit + 1}</span> to <span className="font-medium text-foreground">{Math.min(data.page * data.limit, data.total)}</span> of <span className="font-medium text-foreground">{data.total}</span> tickets
+                    Affichage <span className="font-medium text-foreground">{(data.page - 1) * data.limit + 1}</span> à <span className="font-medium text-foreground">{Math.min(data.page * data.limit, data.total)}</span> sur <span className="font-medium text-foreground">{data.total}</span> tickets
                   </div>
                   <div className="flex gap-2">
                     <Button 
@@ -286,7 +286,7 @@ export default function Tickets() {
                       disabled={page === 1}
                     >
                       <ChevronLeft className="h-4 w-4 mr-1" />
-                      Previous
+                      Précédent
                     </Button>
                     <Button 
                       variant="outline" 
@@ -294,7 +294,7 @@ export default function Tickets() {
                       onClick={() => setPage(p => Math.min(data.totalPages, p + 1))}
                       disabled={page === data.totalPages}
                     >
-                      Next
+                      Suivant
                       <ChevronRight className="h-4 w-4 ml-1" />
                     </Button>
                   </div>

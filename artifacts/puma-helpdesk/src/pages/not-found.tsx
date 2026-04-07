@@ -9,14 +9,14 @@ export default function NotFound() {
         <SearchX className="h-12 w-12 text-muted-foreground" />
       </div>
       <h1 className="text-4xl font-bold tracking-tight text-foreground mb-2">404</h1>
-      <h2 className="text-2xl font-semibold text-muted-foreground mb-6">Page Not Found</h2>
+      <h2 className="text-2xl font-semibold text-muted-foreground mb-6">Page introuvable</h2>
       <p className="text-muted-foreground max-w-md mx-auto mb-8">
-        The page you are looking for doesn't exist or has been moved. 
-        Please check the URL or return to the dashboard.
+        La page que vous recherchez n'existe pas ou a été déplacée.
+        Vérifiez l'URL ou retournez au tableau de bord.
       </p>
       <Link href="/">
         <Button size="lg" className="shadow-sm hover-elevate">
-          Return to Dashboard
+          Retour au tableau de bord
         </Button>
       </Link>
     </div>

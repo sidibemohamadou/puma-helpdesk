@@ -115,8 +115,8 @@ export default function Dashboard() {
     <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">IT Command Center</h1>
-          <p className="text-muted-foreground mt-1">Real-time overview of PUMA IT operations and ticketing system.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Tableau de bord</h1>
+          <p className="text-muted-foreground mt-1">Vue en temps réel des opérations IT et du système de tickets PUMA.</p>
         </div>
         <Link href="/tickets/new">
           <Button className="shadow-sm hover-elevate">
@@ -130,7 +130,7 @@ export default function Dashboard() {
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <Card className="border-border shadow-sm hover-elevate">
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Open Tickets</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Tickets ouverts</CardTitle>
             <div className="p-2 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded-md">
               <Ticket className="h-4 w-4" />
             </div>
@@ -138,14 +138,14 @@ export default function Dashboard() {
           <CardContent>
             <div className="text-3xl font-bold text-foreground">{stats?.openTickets || 0}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Requires attention
+              Nécessitent une action
             </p>
           </CardContent>
         </Card>
         
         <Card className="border-border shadow-sm hover-elevate">
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Critical Priority</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Priorité critique</CardTitle>
             <div className="p-2 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-md">
               <AlertCircle className="h-4 w-4" />
             </div>
@@ -153,14 +153,14 @@ export default function Dashboard() {
           <CardContent>
             <div className="text-3xl font-bold text-foreground">{stats?.criticalTickets || 0}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Highest urgency incidents
+              Incidents de plus haute urgence
             </p>
           </CardContent>
         </Card>
         
         <Card className="border-border shadow-sm hover-elevate">
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Avg. Resolution Time</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Délai moyen de résolution</CardTitle>
             <div className="p-2 bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 rounded-md">
               <Clock className="h-4 w-4" />
             </div>
@@ -170,14 +170,14 @@ export default function Dashboard() {
               {stats?.avgResolutionTimeHours != null ? `${Number(stats.avgResolutionTimeHours).toFixed(1)}h` : "N/A"}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Across resolved tickets
+              Sur les tickets résolus
             </p>
           </CardContent>
         </Card>
         
         <Card className="border-border shadow-sm hover-elevate">
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Resolved Today</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Résolus aujourd'hui</CardTitle>
             <div className="p-2 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-md">
               <CheckCircle2 className="h-4 w-4" />
             </div>
@@ -185,7 +185,7 @@ export default function Dashboard() {
           <CardContent>
             <div className="text-3xl font-bold text-foreground">{stats?.resolvedTickets || 0}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Successfully closed
+              Clôturés avec succès
             </p>
           </CardContent>
         </Card>
@@ -197,9 +197,9 @@ export default function Dashboard() {
           <CardHeader className="pb-2 border-b">
             <CardTitle className="text-lg flex items-center gap-2">
               <Activity className="h-5 w-5 text-primary" />
-              Tickets by Category
+              Tickets par catégorie
             </CardTitle>
-            <CardDescription>Distribution of active incidents across domains</CardDescription>
+            <CardDescription>Répartition des incidents actifs par domaine</CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
             <div className="h-[300px] w-full">
@@ -245,9 +245,9 @@ export default function Dashboard() {
           <CardHeader className="pb-2 border-b">
             <CardTitle className="text-lg flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-primary" />
-              Ticket Priority
+              Priorité des tickets
             </CardTitle>
-            <CardDescription>Current breakdown by urgency level</CardDescription>
+            <CardDescription>Répartition actuelle par niveau d'urgence</CardDescription>
           </CardHeader>
           <CardContent className="pt-2 pb-0">
             <div className="h-[300px] w-full">
@@ -294,9 +294,9 @@ export default function Dashboard() {
             <div>
               <CardTitle className="text-lg flex items-center gap-2">
                 <History className="h-5 w-5 text-primary" />
-                Recent Activity
+                Activité récente
               </CardTitle>
-              <CardDescription>Latest actions on tickets</CardDescription>
+              <CardDescription>Dernières actions sur les tickets</CardDescription>
             </div>
           </CardHeader>
           <CardContent className="p-0">
@@ -326,7 +326,7 @@ export default function Dashboard() {
                 ))
               ) : (
                 <div className="p-8 text-center text-muted-foreground">
-                  No recent activity found.
+                  Aucune activité récente trouvée.
                 </div>
               )}
             </div>
@@ -334,7 +334,7 @@ export default function Dashboard() {
               <div className="p-3 border-t bg-muted/20 text-center">
                 <Link href="/tickets">
                   <Button variant="link" size="sm" className="text-primary h-auto p-0">
-                    View all tickets <ChevronRight className="ml-1 h-3 w-3" />
+                    Voir tous les tickets <ChevronRight className="ml-1 h-3 w-3" />
                   </Button>
                 </Link>
               </div>
@@ -348,9 +348,9 @@ export default function Dashboard() {
             <div>
               <CardTitle className="text-lg flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-primary" />
-                Technician Performance
+                Performance des techniciens
               </CardTitle>
-              <CardDescription>Resolution metrics by team member</CardDescription>
+              <CardDescription>Métriques de résolution par membre de l'équipe</CardDescription>
             </div>
           </CardHeader>
           <CardContent className="p-0 flex-1 overflow-auto">
@@ -359,10 +359,10 @@ export default function Dashboard() {
                 <table className="w-full text-sm">
                   <thead className="bg-muted/50 sticky top-0">
                     <tr>
-                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">Technician</th>
-                      <th className="px-4 py-3 text-right font-medium text-muted-foreground">Assigned</th>
-                      <th className="px-4 py-3 text-right font-medium text-muted-foreground">Resolved</th>
-                      <th className="px-4 py-3 text-right font-medium text-muted-foreground">Avg Time</th>
+                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">Technicien</th>
+                      <th className="px-4 py-3 text-right font-medium text-muted-foreground">Assignés</th>
+                      <th className="px-4 py-3 text-right font-medium text-muted-foreground">Résolus</th>
+                      <th className="px-4 py-3 text-right font-medium text-muted-foreground">Délai moy.</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y border-border">
@@ -395,7 +395,7 @@ export default function Dashboard() {
                 </table>
               ) : (
                 <div className="p-8 text-center text-muted-foreground">
-                  No performance data available.
+                  Aucune donnée de performance disponible.
                 </div>
               )}
             </div>

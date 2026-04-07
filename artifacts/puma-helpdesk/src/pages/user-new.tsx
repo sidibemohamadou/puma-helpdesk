@@ -31,9 +31,9 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, UserPlus } from "lucide-react";
 
 const createUserSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters").max(100),
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  name: z.string().min(2, "Le nom doit comporter au moins 2 caractères").max(100),
+  email: z.string().email("Veuillez saisir une adresse email valide"),
+  password: z.string().min(6, "Le mot de passe doit comporter au moins 6 caractères"),
   role: z.enum(["agent", "technician", "admin"]),
   department: z.string().optional(),
 });
@@ -64,16 +64,16 @@ export default function UserNew() {
       {
         onSuccess: () => {
           toast({
-            title: "User Created",
-            description: `${data.name} has been added to the system.`,
+            title: "Utilisateur créé",
+            description: `${data.name} a été ajouté au système.`,
           });
           queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
           setLocation("/users");
         },
         onError: (error) => {
           toast({
-            title: "Failed to create user",
-            description: error.error?.message || "An unexpected error occurred",
+            title: "Échec de la création",
+            description: error.error?.message || "Une erreur inattendue est survenue",
             variant: "destructive",
           });
         },
@@ -90,8 +90,8 @@ export default function UserNew() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Add Personnel</h1>
-          <p className="text-muted-foreground mt-1">Create a new user account for PUMA IT Helpdesk.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Ajouter du personnel</h1>
+          <p className="text-muted-foreground mt-1">Créez un nouveau compte utilisateur pour le PUMA Helpdesk.</p>
         </div>
       </div>
 
@@ -99,10 +99,10 @@ export default function UserNew() {
         <CardHeader className="bg-muted/20 border-b">
           <CardTitle className="flex items-center gap-2 text-lg">
             <UserPlus className="h-5 w-5 text-primary" />
-            Account Details
+            Informations du compte
           </CardTitle>
           <CardDescription>
-            User will be able to log in immediately with the provided password.
+            L'utilisateur pourra se connecter immédiatement avec le mot de passe fourni.
           </CardDescription>
         </CardHeader>
         
@@ -115,9 +115,9 @@ export default function UserNew() {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Full Name <span className="text-destructive">*</span></FormLabel>
+                      <FormLabel>Nom complet <span className="text-destructive">*</span></FormLabel>
                       <FormControl>
-                        <Input placeholder="John Doe" {...field} />
+                        <Input placeholder="Prénom Nom" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -129,9 +129,9 @@ export default function UserNew() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email Address <span className="text-destructive">*</span></FormLabel>
+                      <FormLabel>Adresse email <span className="text-destructive">*</span></FormLabel>
                       <FormControl>
-                        <Input placeholder="john.doe@puma.gov" type="email" {...field} />
+                        <Input placeholder="prenom.nom@puma.sn" type="email" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -145,11 +145,11 @@ export default function UserNew() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Temporary Password <span className="text-destructive">*</span></FormLabel>
+                      <FormLabel>Mot de passe temporaire <span className="text-destructive">*</span></FormLabel>
                       <FormControl>
-                        <Input type="text" placeholder="Generate secure password..." {...field} />
+                        <Input type="text" placeholder="Générer un mot de passe sécurisé..." {...field} />
                       </FormControl>
-                      <FormDescription>Provide this password to the user securely.</FormDescription>
+                      <FormDescription>Communiquez ce mot de passe à l'utilisateur de façon sécurisée.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -160,17 +160,17 @@ export default function UserNew() {
                   name="role"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>System Role <span className="text-destructive">*</span></FormLabel>
+                      <FormLabel>Rôle système <span className="text-destructive">*</span></FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select a role" />
+                            <SelectValue placeholder="Choisir un rôle" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="agent">Agent (Submit & View Tickets)</SelectItem>
-                          <SelectItem value="technician">Technician (Resolve & Comment)</SelectItem>
-                          <SelectItem value="admin">Admin (Full System Access)</SelectItem>
+                          <SelectItem value="agent">Agent (Soumettre et suivre les tickets)</SelectItem>
+                          <SelectItem value="technician">Technicien (Résoudre et commenter)</SelectItem>
+                          <SelectItem value="admin">Administrateur (Accès complet)</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -184,9 +184,9 @@ export default function UserNew() {
                 name="department"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Department</FormLabel>
+                    <FormLabel>Département</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. Finance, HR, Engineering" {...field} />
+                      <Input placeholder="Ex : Finances, RH, Informatique" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -196,10 +196,10 @@ export default function UserNew() {
             
             <CardFooter className="bg-muted/10 border-t px-6 py-4 flex justify-between">
               <Button type="button" variant="ghost" onClick={() => setLocation("/users")}>
-                Cancel
+                Annuler
               </Button>
               <Button type="submit" className="shadow-sm hover-elevate" disabled={createUserMutation.isPending}>
-                {createUserMutation.isPending ? "Creating..." : "Create Account"}
+                {createUserMutation.isPending ? "Création en cours..." : "Créer le compte"}
               </Button>
             </CardFooter>
           </form>
