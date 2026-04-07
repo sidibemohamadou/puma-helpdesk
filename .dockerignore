@@ -1,0 +1,41 @@
+# Contrôle de version
+.git
+.gitignore
+.gitattributes
+
+# Dépendances (reconstruites dans le conteneur)
+node_modules
+*/node_modules
+**/node_modules
+
+# Builds locaux (reconstruits dans le conteneur)
+*/dist
+**/dist
+.local
+
+# Secrets et config locaux (ne jamais envoyer dans l'image)
+.env
+.env.*
+!.env.docker.example
+
+# Logs
+*.log
+logs/
+/var/log
+
+# Fichiers temporaires et OS
+.DS_Store
+*.bak.*
+*.bak
+Thumbs.db
+
+# Documentation et scripts de déploiement (inutiles dans l'image)
+deploy.sh
+DEPLOIEMENT.md
+README.md
+*.md
+
+# Tests et outils de développement
+.local/skills
+.local/tasks
+screenshots/

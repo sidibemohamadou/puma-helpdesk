@@ -1,0 +1,51 @@
+# ===========================================================================
+# PUMA Helpdesk — API Server
+# Multi-stage build : builder (Node 22) → production (Node 22-slim)
+# L'API est bundlée par esbuild → le dist/ est autonome (pas de node_modules)
+# ===========================================================================
+
+# ── Stage 1 : Build ─────────────────────────────────────────────────────────
+FROM node:22 AS builder
+WORKDIR /workspace
+
+# Activer pnpm via corepack
+RUN corepack enable && corepack prepare pnpm@9 --activate
+
+# Copier les fichiers de configuration du workspace en premier
+# (Docker cache layer — ne change que si package.json/lockfile change)
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY tsconfig.json tsconfig.base.json ./
+
+# Copier uniquement les package.json de chaque paquet (résolution workspace)
+COPY lib/db/package.json            lib/db/
+COPY lib/api-spec/package.json      lib/api-spec/
+COPY lib/api-zod/package.json       lib/api-zod/
+COPY lib/api-client-react/package.json lib/api-client-react/
+COPY artifacts/api-server/package.json artifacts/api-server/
+
+# Installer toutes les dépendances (lockfile gelé pour reproductibilité)
+RUN pnpm install --frozen-lockfile
+
+# Copier le code source
+COPY lib/                    lib/
+COPY artifacts/api-server/   artifacts/api-server/
+
+# Build : esbuild bundle tout dans dist/index.mjs (fichier autonome)
+RUN pnpm --filter @workspace/api-server run build
+
+# ── Stage 2 : Production ────────────────────────────────────────────────────
+FROM node:22-slim AS production
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Copier uniquement le bundle compilé (pas de node_modules nécessaire)
+COPY --from=builder /workspace/artifacts/api-server/dist ./dist
+
+EXPOSE 3001
+
+HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=5 \
+  CMD node -e "require('http').get('http://localhost:'+process.env.PORT+'/api/health', r => process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))" \
+  || exit 1
+
+CMD ["node", "--enable-source-maps", "./dist/index.mjs"]

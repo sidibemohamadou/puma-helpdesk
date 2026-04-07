@@ -4,9 +4,25 @@
 
 PUMA Helpdesk est une application full-stack composée de :
 - **Frontend** : React + Vite (fichiers statiques servis par Nginx)
-- **Backend (API)** : Express 5 + Node.js (géré par PM2)
+- **Backend (API)** : Express 5 + Node.js (géré par PM2 ou Docker)
 - **Base de données** : PostgreSQL 16
 - **Reverse proxy** : Nginx (HTTP/HTTPS + SSE temps réel)
+
+Le script `deploy.sh` prend en charge **deux modes** :
+
+| Mode | Quand l'utiliser |
+|------|-----------------|
+| **Docker** | Vous avez un gestionnaire de conteneurs (Docker/Podman) ou voulez éviter tout conflit avec les apps existantes |
+| **Natif** | Installation directe sur CentOS sans Docker — Node.js + PM2 + Nginx sur le système |
+
+```bash
+# Lancement interactif (le script vous demande le mode)
+sudo bash deploy.sh
+
+# Ou directement :
+sudo bash deploy.sh --docker    # mode Docker
+sudo bash deploy.sh --native    # mode Natif
+```
 
 ---
 
@@ -19,6 +35,124 @@ PUMA Helpdesk est une application full-stack composée de :
 | Disque | 10 Go | 20 Go |
 | Node.js | 20.x | 22.x |
 | PostgreSQL | 14 | 16 |
+
+---
+
+## Déploiement avec Docker (manuel)
+
+Si vous préférez gérer Docker vous-même sans passer par le script :
+
+### Fichiers fournis
+
+| Fichier | Rôle |
+|---------|------|
+| `Dockerfile.api` | Build + image production de l'API Node.js |
+| `Dockerfile.web` | Build du frontend Vite + image Nginx |
+| `docker-compose.yml` | Orchestration des 3 services (db, api, web) |
+| `nginx.docker.conf` | Config Nginx interne au conteneur web |
+| `.env.docker.example` | Modèle de fichier de variables d'environnement |
+
+### Architecture des conteneurs
+
+```
+┌────────────────────────────────────────────────────┐
+│  VPS (CentOS 10)                                   │
+│                                                    │
+│  ┌──────────────────────────────────────────────┐  │
+│  │  Docker réseau interne (puma_internal)       │  │
+│  │                                              │  │
+│  │  [web]     Nginx :80 ──proxy /api──► [api]  │  │
+│  │   │         sert dist/              Express  │  │
+│  │   │         (statique)              :3001     │  │
+│  │   │                                  │       │  │
+│  │   └────────────────────────────────► [db]   │  │
+│  │                                    Postgres  │  │
+│  │                                    :5432     │  │
+│  └──────────────────────────────────────────────┘  │
+│       Port 80 exposé vers l'extérieur               │
+└────────────────────────────────────────────────────┘
+```
+
+### Étapes manuelles
+
+```bash
+# 1. Installer Docker sur CentOS
+curl -fsSL https://get.docker.com | sh
+systemctl enable --now docker
+
+# 2. Préparer les variables d'environnement
+cp .env.docker.example .env.docker
+nano .env.docker
+# → Remplir DB_PASSWORD et SESSION_SECRET (openssl rand -base64 64)
+# → Modifier HTTP_PORT si le port 80 est déjà utilisé
+
+# 3. Construire et démarrer tous les conteneurs
+docker compose --env-file .env.docker up -d --build
+
+# 4. Vérifier que tout tourne
+docker compose --env-file .env.docker ps
+
+# 5. (Optionnel) Injecter les données de démonstration
+docker compose --env-file .env.docker exec db \
+  psql -U puma_user -d puma_helpdesk -c "\dt"
+```
+
+### Commandes Docker utiles
+
+```bash
+# Statut de tous les conteneurs
+docker compose --env-file .env.docker ps
+
+# Logs de l'API en temps réel
+docker compose --env-file .env.docker logs -f api
+
+# Logs de Nginx
+docker compose --env-file .env.docker logs -f web
+
+# Redémarrer l'API (après mise à jour du code)
+docker compose --env-file .env.docker restart api
+
+# Rebuild complet après modification du code
+docker compose --env-file .env.docker up -d --build
+
+# Arrêter tout (la base de données est préservée dans le volume pgdata)
+docker compose --env-file .env.docker down
+
+# Arrêter ET supprimer les données (reset complet — irréversible)
+docker compose --env-file .env.docker down -v
+
+# Accéder à la base de données
+docker compose --env-file .env.docker exec db \
+  psql -U puma_user -d puma_helpdesk
+
+# Backup de la base de données
+docker compose --env-file .env.docker exec db \
+  pg_dump -U puma_user puma_helpdesk > backup_$(date +%Y%m%d).sql
+```
+
+### Mise à jour de l'application (Docker)
+
+```bash
+# Transférer le nouveau code
+rsync -avz --exclude='.git' --exclude='node_modules' \
+  /chemin/local/ root@VOTRE_IP:/opt/puma-helpdesk/
+
+# Sur le VPS
+cd /opt/puma-helpdesk
+docker compose --env-file .env.docker up -d --build
+```
+
+### Conflit sur le port 80
+
+Si une autre application utilise déjà le port 80, modifiez `HTTP_PORT` dans `.env.docker` :
+```env
+HTTP_PORT=8080
+```
+Puis ajoutez une règle firewalld :
+```bash
+firewall-cmd --permanent --add-port=8080/tcp
+firewall-cmd --reload
+```
 
 ---
 

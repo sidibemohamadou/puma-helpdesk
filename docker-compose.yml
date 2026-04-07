@@ -1,0 +1,80 @@
+services:
+
+  # ── Base de données PostgreSQL ────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       ${DB_NAME:-puma_helpdesk}
+      POSTGRES_USER:     ${DB_USER:-puma_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-puma_user} -d ${DB_NAME:-puma_helpdesk}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - puma_internal
+
+  # ── Migrations Drizzle (job unique au démarrage) ──────────────────────────
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    command: >
+      node -e "
+        const { execSync } = require('child_process');
+        execSync('pnpm --filter @workspace/db run push-force', { stdio: 'inherit' });
+      "
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-puma_user}:${DB_PASSWORD}@db:5432/${DB_NAME:-puma_helpdesk}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - puma_internal
+    restart: "no"
+
+  # ── API Express (Node.js) ─────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    restart: unless-stopped
+    environment:
+      NODE_ENV:       production
+      PORT:           3001
+      DATABASE_URL:   postgresql://${DB_USER:-puma_user}:${DB_PASSWORD}@db:5432/${DB_NAME:-puma_helpdesk}
+      SESSION_SECRET: ${SESSION_SECRET}
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - puma_internal
+    # L'API n'est pas exposée directement — uniquement via Nginx
+
+  # ── Frontend React + Nginx ────────────────────────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    depends_on:
+      - api
+    networks:
+      - puma_internal
+
+volumes:
+  pgdata:
+    driver: local
+
+networks:
+  puma_internal:
+    driver: bridge

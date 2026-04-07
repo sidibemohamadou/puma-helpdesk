@@ -1,0 +1,43 @@
+# ===========================================================================
+# PUMA Helpdesk — Frontend (React + Vite → Nginx)
+# Multi-stage build : builder (Node 22) → production (nginx:alpine)
+# ===========================================================================
+
+# ── Stage 1 : Build ─────────────────────────────────────────────────────────
+FROM node:22 AS builder
+WORKDIR /workspace
+
+RUN corepack enable && corepack prepare pnpm@9 --activate
+
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY tsconfig.json tsconfig.base.json ./
+
+COPY lib/db/package.json               lib/db/
+COPY lib/api-spec/package.json         lib/api-spec/
+COPY lib/api-zod/package.json          lib/api-zod/
+COPY lib/api-client-react/package.json lib/api-client-react/
+COPY artifacts/puma-helpdesk/package.json artifacts/puma-helpdesk/
+
+RUN pnpm install --frozen-lockfile
+
+COPY lib/                       lib/
+COPY artifacts/puma-helpdesk/   artifacts/puma-helpdesk/
+
+# Build Vite → fichiers statiques dans artifacts/puma-helpdesk/dist/
+RUN pnpm --filter @workspace/puma-helpdesk run build
+
+# ── Stage 2 : Production (Nginx) ────────────────────────────────────────────
+FROM nginx:alpine AS production
+
+# Fichiers statiques compilés
+COPY --from=builder /workspace/artifacts/puma-helpdesk/dist /usr/share/nginx/html
+
+# Configuration Nginx (proxy /api → conteneur api, SSE inclus)
+COPY nginx.docker.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+
+HEALTHCHECK --interval=10s --timeout=5s --start-period=5s --retries=3 \
+  CMD wget -qO- http://localhost/index.html || exit 1
+
+CMD ["nginx", "-g", "daemon off;"]
