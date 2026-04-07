@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { 
@@ -51,10 +51,10 @@ export default function Users() {
   
   const [userToDelete, setUserToDelete] = useState<number | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     const handler = setTimeout(() => setDebouncedSearch(search), 300);
     return () => clearTimeout(handler);
-  });
+  }, [search]);
 
   const { data, isLoading } = useListUsers({
     search: debouncedSearch || undefined,
@@ -163,7 +163,7 @@ export default function Users() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data?.users.map((u: User) => (
+                  {(data as User[] | undefined)?.map((u: User) => (
                     <TableRow key={u.id} className="hover:bg-muted/30">
                       <TableCell>
                         <div className="flex items-center gap-3">
