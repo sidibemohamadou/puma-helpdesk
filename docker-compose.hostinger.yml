@@ -21,6 +21,7 @@ services:
     build:
       context: https://github.com/sidibemohamadou/puma-helpdesk.git#main
       dockerfile: Dockerfile.api
+      network : host
     restart: unless-stopped
     environment:
       NODE_ENV:       production
