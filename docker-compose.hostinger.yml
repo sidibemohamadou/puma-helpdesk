@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       ${DB_NAME:-puma_helpdesk}
+      POSTGRES_USER:     ${DB_USER:-puma_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-puma_user} -d ${DB_NAME:-puma_helpdesk}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - puma_internal
+
+  api:
+    build:
+      context: https://github.com/sidibemohamadou/puma-helpdesk.git#main
+      dockerfile: Dockerfile.api
+    restart: unless-stopped
+    environment:
+      NODE_ENV:       production
+      PORT:           3001
+      DATABASE_URL:   postgresql://${DB_USER:-puma_user}:${DB_PASSWORD}@db:5432/${DB_NAME:-puma_helpdesk}
+      SESSION_SECRET: ${SESSION_SECRET}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - puma_internal
+
+  web:
+    build:
+      context: https://github.com/sidibemohamadou/puma-helpdesk.git#main
+      dockerfile: Dockerfile.web
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    depends_on:
+      - api
+    networks:
+      - puma_internal
+
+volumes:
+  pgdata:
+    driver: local
+
+networks:
+  puma_internal:
+    driver: bridge
