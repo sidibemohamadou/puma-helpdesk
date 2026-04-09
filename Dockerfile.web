@@ -18,7 +18,7 @@ COPY lib/api-zod/package.json          lib/api-zod/
 COPY lib/api-client-react/package.json lib/api-client-react/
 COPY artifacts/puma-helpdesk/package.json artifacts/puma-helpdesk/
 
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --no-frozen-lockfile
 
 COPY lib/                       lib/
 COPY artifacts/puma-helpdesk/   artifacts/puma-helpdesk/
