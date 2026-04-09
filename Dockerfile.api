@@ -24,7 +24,7 @@ COPY lib/api-client-react/package.json lib/api-client-react/
 COPY artifacts/api-server/package.json artifacts/api-server/
 
 # Installer toutes les dépendances (lockfile gelé pour reproductibilité)
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --no-frozen-lockfile
 
 # Copier le code source
 COPY lib/                    lib/
